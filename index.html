@@ -180,9 +180,24 @@ html.touch body{-webkit-touch-callout:none;-webkit-user-select:none;user-select:
   padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
 html.touch input,html.touch textarea{-webkit-user-select:text;user-select:text}
 html.touch .mapwrap{touch-action:none}
+/* 긴 화면이 안 내려가던 것 (v3.141 · PD 실기 — 홈 화면 앱 시작/세력 선택) — `.title` 은 overflow:hidden + 가운데 정렬이라
+   내용이 뷰포트(가로 820)보다 길면 **위아래가 똑같이 잘리고 손가락으로 닿을 길이 없다.** 터치일 때만 스크롤 컨테이너로 바꾼다
+   (`margin:auto` 는 넘치면 위에서부터 시작해 맨 위·맨 아래까지 닿는다). 높이 단위는 dvh(주소창·홈 표시줄을 뺀 가시 높이) 우선 · safe-area 안쪽. */
+html.touch .title,html.touch .mask,html.touch .advtop{overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;
+  touch-action:pan-y;align-items:flex-start;
+  padding-top:max(12px,env(safe-area-inset-top));padding-bottom:max(12px,env(safe-area-inset-bottom));
+  padding-left:max(22px,env(safe-area-inset-left));padding-right:max(22px,env(safe-area-inset-right))}
+html.touch .title>.twrap,html.touch .mask>.dlg,html.touch .mask>.tpbox,html.touch .mask>.askbox,html.touch .advtop>.frame{margin:auto}
+html.touch .tgrid,html.touch .slist{max-height:none;overflow-y:visible}
+html.touch .dlg{max-height:none}
+html.touch .tpbox,html.touch .askbox,html.touch .advtop .frame{max-height:none}
+html.touch .tiplist{max-height:40vh;max-height:40dvh;-webkit-overflow-scrolling:touch;touch-action:pan-y}
+html.touch aside,html.touch .logbar{-webkit-overflow-scrolling:touch;touch-action:pan-y;overscroll-behavior:contain}
 .maphint .ht{display:none}
 html.touch .maphint .hm{display:none}
 html.touch .maphint .ht{display:inline}
+/* 제스처 중(v3.141) — 얼린 SVG 레이어 안에서 도는 애니메이션은 레이어를 매 프레임 다시 그리게 한다 */
+html.gesture .node.pickable rect{animation:none}
 .ttbub{position:fixed;z-index:99999;max-width:320px;padding:8px 12px;background:var(--paperhi);color:var(--tx);
   border:2px solid var(--gold);font-size:15px;line-height:1.45;white-space:pre-line;pointer-events:none;
   box-shadow:3px 3px 0 rgba(0,0,0,.5)}
@@ -1686,7 +1701,11 @@ img.por,img.por-lg{object-fit:cover;object-position:50% 18%;image-rendering:auto
    폭은 `--ua` 배(위 규칙 그대로), 높이는 3:2 로 풀고 **발바닥이 토큰 바닥에 닿게 5/64 = 7.8% 내린다**.
    ⚠️ 칸이 토큰보다 훨씬 넓다(극을 뻗으면 옆 칸까지 간다) — 클릭은 토큰이 받아야 하므로 `pointer-events:none`.
    ⚠️ 프레임은 `g3Frame` 이 ×2(192×128, 최근접)로 구워 준다 — CSS 는 줄이기만 한다(`image-rendering:auto`). */
-.unit .uart.g3{height:auto;aspect-ratio:3/2;object-fit:fill;transform:translate(-50%,7.8%);pointer-events:none}
+/* 🔥 **정수 물리 픽셀 스냅** (v3.140 · 1011 병사 흐림) — 도트 1칸이 화면에서 1.68px 같은 비정수가 되면 최근접이든 보간이든 가장자리가 번진다.
+   `g3Snap`(fitGrid 끝)이 칸당 **정수 물리 px n** 을 골라 `--g3w` = 96n/dpr 을 넣고(폭 = 96 칸 × n 물리 px),
+   위치의 소수 부분은 `--sx`·`--sy` 가 물리 격자로 끌어당긴다. 시트는 ×4 라 n≤4 는 정확히 한 칸 = n×n 픽셀이다 → `pixelated`. */
+.unit .uart.g3{width:var(--g3w, calc(100% * var(--ua,1)));height:auto;aspect-ratio:3/2;object-fit:fill;image-rendering:pixelated;
+  transform:translate(calc(-50% + var(--sx, 0px)), calc(7.8% + var(--sy, 0px)));pointer-events:none}
 /* 잔상(공격 중 직전 프레임) — 같은 자리에 겹쳐 앉고 `g3Ghost` 가 알파를 깎는다 */
 .unit .uart.ghost{pointer-events:none}
 /* ── 축약 단계 (v3.22) — 격자가 커지면 셀이 작아진다. 무엇을 버릴지 순서를 정해 둔다 ── */
@@ -8803,6 +8822,29 @@ const el = (t, a = {}) => { const e = document.createElementNS(NS, t); for (cons
 const MEANLAT = 32, KX = Math.cos(MEANLAT * Math.PI / 180);
 const PX = v => v * KX * 100, PY = v => -v * 100;
 let cam = { x:0, y:0, k:1 }, mapBuilt = false;
+/* 🔥 터치 제스처 중에는 지도를 **다시 그리지 않는다** (v3.141 · PD 실기: iPad Safari 에서 이동·핀치가 엄청 버벅).
+   SVG 안 #cam 의 transform 속성을 바꾸면 안개 블러(σ36)·경계 블러(σ11)·부조 필터 셋·구름 마스크가 **움직일 때마다** 다시 래스터화된다 —
+   Safari 는 그걸 매 프레임 CPU 로 한다. 대신 제스처 시작 때의 모습을 `<svg>` 통째로 합성 레이어(will-change)에 얹어 두고
+   CSS translate3d/scale 로만 움직이다가, 손을 떼면 **한 번만** applyCam 으로 정식 렌더한다(정수 배율 사다리 스냅도 이때).
+   마우스·휠 길은 그대로 applyCam 을 부른다. */
+let camGest = null;
+function camGestShow(){
+  const g = camGest; if(!g) return;
+  const s = cam.k / g.k;
+  g.svg.style.transform = `translate3d(${(cam.x - s*g.x).toFixed(2)}px,${(cam.y - s*g.y).toFixed(2)}px,0) scale(${s.toFixed(5)})`;
+}
+function camGestBegin(){
+  if(camGest) return;
+  const svg = document.getElementById("svg");
+  camGest = { x:cam.x, y:cam.y, k:cam.k, svg };
+  svg.style.transformOrigin = "0 0"; svg.style.willChange = "transform";
+  document.documentElement.classList.add("gesture");
+}
+function camGestClear(){
+  if(!camGest) return;
+  const svg = camGest.svg; svg.style.transform = ""; svg.style.willChange = ""; svg.style.transformOrigin = "";
+  camGest = null; document.documentElement.classList.remove("gesture");
+}
 let moveHint = null;   // 이동 계획 중일 때 목적지 후보 id 집합
 
 function cellPath(cid){
@@ -9828,6 +9870,7 @@ function layoutLabels(){
 }
 
 function applyCam(){
+  if(camGest) camGestClear();   // 제스처 중 바깥에서 부르면 덧씌운 CSS 변환을 먼저 걷는다(이중 적용 방지)
   clampCam();          // 배율·이동을 지도 범위 안으로 — 화면에 여백이 생기지 않게
   $("#cam").setAttribute("transform", `translate(${cam.x} ${cam.y}) scale(${cam.k})`);
   layoutLabels();      // 이름표 — 줌 단계별 규칙 · 충돌 회피 · UI 밑 가림 (v3.123)
@@ -13153,32 +13196,48 @@ function assignTarget(gid, to){
   addEventListener("mouseup", () => { drag = null; wrap.classList.remove("drag"); });
   /* 터치: 한 손가락 = 이동, 두 손가락 = 줌(정수 사다리 한 칸씩). 마우스 길은 위 그대로다 — iOS 는 터치 드래그에
      mousemove 를 안 보내므로 포인터 이벤트로 따로 받는다. 캡처는 걸지 않는다(탭이 도시 단추로 가야 한다). */
-  const tp = new Map(); let pd0 = 0, pmid = null;
+  const tp = new Map(); let pb = null, moved = false, raf = 0, lastMid = null;   // pb = 핀치 기준(시작 배율 · 두 손가락 거리 · 중점 밑 지도 좌표)
   const tmid = () => { const a = [...tp.values()]; return { x:(a[0].x+a[1].x)/2, y:(a[0].y+a[1].y)/2, d:Math.hypot(a[0].x-a[1].x, a[0].y-a[1].y) }; };
+  const pinchBase = () => { const m = tmid(), r = wrap.getBoundingClientRect();
+    pb = { k0:cam.k, d0:m.d || 1, ux:((m.x-r.left)-cam.x)/cam.k, uy:((m.y-r.top)-cam.y)/cam.k }; lastMid = m; };
+  /* 프레임당 한 번만 계산한다(pointermove 는 120Hz 로 오기도 한다) — 위치는 tp 에 쌓아 두고 여기서 카메라로 옮긴다 */
+  const flush = () => { raf = 0;
+    if(tp.size === 1){
+      const p = [...tp.values()][0]; if(!drag) return;
+      if(!moved){ if(Math.hypot(p.x-p.x0, p.y-p.y0) < 4) return; moved = true; }   // 탭이 도시 단추로 가도록 4px 유예
+      camGestBegin(); cam.x = p.x-drag.x; cam.y = p.y-drag.y; clampCam(); camGestShow();
+    } else if(tp.size === 2 && pb){
+      const m = tmid(), r = wrap.getBoundingClientRect(), L = camLimits();
+      camGestBegin(); lastMid = m;
+      cam.k = clamp(pb.k0 * (m.d/pb.d0), L.minK, L.maxK);                       // 연속 배율 — 보이기만. 사다리 칸은 손 뗄 때
+      cam.x = (m.x-r.left) - pb.ux*cam.k; cam.y = (m.y-r.top) - pb.uy*cam.k;
+      clampCam(); camGestShow();
+    } };
+  const sched = () => { if(!raf) raf = requestAnimationFrame(flush); };
+  /* 손가락 수가 바뀔 때 — 핀치가 끝나면 가장 가까운 정수 배율 칸으로 붙이고(중점 고정) 한 번 정식 렌더한다 */
+  const settle = () => {
+    if(raf){ cancelAnimationFrame(raf); raf = 0; flush(); }
+    if(pb && camGest){
+      const r = wrap.getBoundingClientRect(), L = camLimits(), nk = zoomStep(cam.k, 0, L), m = lastMid || { x:r.left+r.width/2, y:r.top+r.height/2 };
+      const mx = m.x-r.left, my = m.y-r.top;
+      if(nk !== cam.k){ cam.x = mx-(mx-cam.x)*(nk/cam.k); cam.y = my-(my-cam.y)*(nk/cam.k); cam.k = nk; }
+    }
+    pb = null; camGestClear(); applyCam(); };
   wrap.addEventListener("pointerdown", e => {
     if(e.pointerType !== "touch") return;
-    tp.set(e.pointerId, { x:e.clientX, y:e.clientY });
-    if(tp.size === 1) drag = { x:e.clientX-cam.x, y:e.clientY-cam.y };
-    else if(tp.size === 2){ drag = null; const m = tmid(); pd0 = m.d; pmid = m; }
+    if(pb) settle();
+    tp.set(e.pointerId, { x:e.clientX, y:e.clientY, x0:e.clientX, y0:e.clientY });
+    if(tp.size === 1){ drag = { x:e.clientX-cam.x, y:e.clientY-cam.y }; moved = false; }
+    else if(tp.size === 2){ drag = null; pinchBase(); }
   });
   addEventListener("pointermove", e => {
     if(e.pointerType !== "touch" || !tp.has(e.pointerId)) return;
-    tp.set(e.pointerId, { x:e.clientX, y:e.clientY });
-    if(tp.size === 1 && drag){ cam.x = e.clientX-drag.x; cam.y = e.clientY-drag.y; applyCam(); }
-    else if(tp.size === 2){
-      const m = tmid(), r = wrap.getBoundingClientRect();
-      cam.x += m.x-pmid.x; cam.y += m.y-pmid.y; pmid = m;
-      const q = m.d/(pd0 || 1);
-      if(q > 1.35 || q < 0.74){
-        const L = camLimits(), nk = zoomStep(cam.k, q > 1 ? +1 : -1, L), mx = m.x-r.left, my = m.y-r.top;
-        if(nk !== cam.k){ cam.x = mx-(mx-cam.x)*(nk/cam.k); cam.y = my-(my-cam.y)*(nk/cam.k); cam.k = nk; }
-        pd0 = m.d;
-      }
-      applyCam();
-    }
+    const p = tp.get(e.pointerId); p.x = e.clientX; p.y = e.clientY; sched();
   });
-  const tpEnd = e => { if(e.pointerType !== "touch") return; tp.delete(e.pointerId);
-    drag = tp.size === 1 ? (() => { const p = [...tp.values()][0]; return { x:p.x-cam.x, y:p.y-cam.y }; })() : null; };
+  const tpEnd = e => { if(e.pointerType !== "touch" || !tp.has(e.pointerId)) return;
+    if(camGest || pb || raf) settle();
+    tp.delete(e.pointerId);
+    if(tp.size === 1){ const p = [...tp.values()][0]; p.x0 = p.x; p.y0 = p.y; drag = { x:p.x-cam.x, y:p.y-cam.y }; moved = true; } else drag = null; };
   addEventListener("pointerup", tpEnd); addEventListener("pointercancel", tpEnd);
   wrap.addEventListener("wheel", e => {
     e.preventDefault();
@@ -14733,6 +14792,37 @@ function fitGrid(){
   P.classList.toggle("micro",   cs < 58);
   paintGrid(B);
   pspBar();
+  g3Snap();
+}
+/* 🔥 **G3 도트를 화면 물리 픽셀 정수배로** (v3.140). 토큰 크기(`--tok`, 줄마다 다르다)로 도트 1칸의 현재 크기를 재고
+   n = round(칸 px × dpr) 물리 px(최소 1 · 최대 G3_SNAP_MAX)로 맞춘다 — dpr1 에서 1.68 → 2(+19%), dpr2 에서 3.36 → 3.
+   그림이 n/원래 배로 커지거나 줄므로 머리 위 표식(`--uh`)도 같은 비로 옮긴다. 이펙트 시트는 렌더 폭에서 배율 k 를 읽으므로 따라온다(`fxSheet` 가 다시 정수로).
+   위치는 렌더된 사각형의 소수 부분을 `--sx`·`--sy` 로 물리 격자에 한 번 끌어당긴다. 창·줌·dpr 이 바뀌면 `resize` 가 이 함수를 다시 부른다. */
+const G3_SNAP_MAX = 8;
+function g3Snap(root, dprIn){
+  const b = root || document.getElementById("battle"); if(!b) return;
+  const dpr = dprIn || window.devicePixelRatio || 1;
+  for(const u of b.querySelectorAll(".unit")){
+    const im = u.querySelector(".uart.g3:not(.ghost)"); if(!im) continue;
+    const g = UNIT_ART.g3[im.dataset.type]; if(!g) continue;
+    const tok = u.offsetWidth, ua = parseFloat(u.style.getPropertyValue("--ua")) || 1;
+    if(!(u.dataset.uh0)) u.dataset.uh0 = u.style.getPropertyValue("--uh");
+    if(!tok) continue;
+    const cw = g.cell[0], n = Math.max(1, Math.min(G3_SNAP_MAX, Math.round(tok * ua / cw * dpr)));
+    const wpx = cw * n / dpr;
+    u.style.setProperty("--g3w", wpx + "px");
+    u.style.setProperty("--uh", (parseFloat(u.dataset.uh0) * wpx / (tok * ua)).toFixed(4));
+    im.style.setProperty("--sx", "0px"); im.style.setProperty("--sy", "0px");
+    for(const x of u.querySelectorAll(".uart.g3.ghost")) x.remove();
+  }
+  /* 폭을 다 넣은 뒤에 재야 한다 — 한 부대의 폭이 다른 부대의 위치를 안 바꾸지만 읽기·쓰기를 모아 리플로우를 줄인다 */
+  const imgs = [...b.querySelectorAll(".unit .uart.g3:not(.ghost)")];
+  const rects = imgs.map(im => im.getBoundingClientRect());
+  imgs.forEach((im, i) => {
+    const r = rects[i];
+    im.style.setProperty("--sx", ((Math.round(r.left * dpr) - r.left * dpr) / dpr).toFixed(4) + "px");
+    im.style.setProperty("--sy", ((Math.round(r.top * dpr) - r.top * dpr) / dpr).toFixed(4) + "px");
+  });
 }
 /* 격자선 · 배치 구역 · 강조 · 성벽 · 성문 — 전부 캔버스 한 장에.
    ⚠️ 칸의 상태(강조·성벽)는 **div 의 클래스에서 읽는다** — 두 곳에서 따로 계산하면 갈라진다. */
@@ -15280,10 +15370,14 @@ const FX_SHEET = {
 /* 한 번 재생하고 스스로 지워진다. `delay` ms 동안은 안 보인다 (WAAPI 키프레임 하나로 — 프레임마다 `steps(1,end)` 로 값이 유지된다). */
 function fxSheet(layer, id, x, y, delay, k, opt){
   opt = opt || {};
+  /* 🔥 배율을 **정수 물리 px** 로(v3.140) — 시트 한 칸이 n 물리 px 이 되고 왼쪽 위도 물리 격자에 앉는다 (번짐 방지) */
+  const dpr = window.devicePixelRatio || 1;
+  k = Math.max(1, Math.round(k * dpr)) / dpr;
   const d = FX_SHEET[id], n = d.ms.length, w = d.cell[0] * k, h = d.cell[1] * k;
+  const sn = v => Math.round(v * dpr) / dpr;
   const el = document.createElement("div");
-  el.style.cssText = `position:fixed;left:${(x - d.anchor[0] * k).toFixed(1)}px;top:${(y - d.anchor[1] * k).toFixed(1)}px;width:${w.toFixed(1)}px;height:${h.toFixed(1)}px;`
-    + `background:url(${d.png}) 0 0/${(n * w).toFixed(1)}px ${h.toFixed(1)}px no-repeat;image-rendering:pixelated;pointer-events:none;opacity:0`
+  el.style.cssText = `position:fixed;left:${sn(x - d.anchor[0] * k).toFixed(3)}px;top:${sn(y - d.anchor[1] * k).toFixed(3)}px;width:${w.toFixed(3)}px;height:${h.toFixed(3)}px;`
+    + `background:url(${d.png}) 0 0/${(n * w).toFixed(3)}px ${h.toFixed(3)}px no-repeat;image-rendering:pixelated;pointer-events:none;opacity:0`
     + (opt.flip ? ";transform:scaleX(-1)" : "");
   if(opt.tag) el.dataset.fxs = opt.tag;
   layer.appendChild(el);
@@ -19925,6 +20019,7 @@ if(localStorage.getItem("sk3_proto_nolog")) document.body.classList.add("nolog")
 if(TEST_BATTLE) randomBattle(); else titleScreen();
 
 addEventListener("resize", () => {
+  try { const bt = document.getElementById("battle"); if(BAT && bt && !bt.classList.contains("off")) fitGrid(); } catch(e){}   // 창·줌·dpr 이 바뀌면 도트 정수 배율을 다시 잡는다 (g3Snap)
   if(S) fitOwn();
   fitTestBar();          // 시험 바가 줄바꿈되면 높이가 바뀐다 — 하단 조작부를 다시 비켜 준다
 });
