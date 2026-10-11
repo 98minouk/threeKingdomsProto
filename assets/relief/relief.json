@@ -1,0 +1,19 @@
+{
+  "_doc": "build_relief.mjs 산출물. 경위도 범위는 proto.html 의 buildMap 이 <image> 배치에 쓴다.",
+  "source": "AWS Open Data · Terrain Tiles (Terrarium, SRTM 기반)",
+  "lon": [
+    89.5,
+    128
+  ],
+  "lat": [
+    16.5,
+    45.5
+  ],
+  "w": 1536,
+  "h": 1152,
+  "zoom": 6,
+  "maxElevM": 6750,
+  "pxW": 384,
+  "pxH": 288,
+  "_px": "relief-px.png = build_pixelmap.mjs 가 relief.png 를 줄인 픽셀 부조. 색 단계는 런타임이 정한다."
+}
