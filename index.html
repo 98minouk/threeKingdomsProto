@@ -207,8 +207,8 @@ html.touch .touchonly{display:inline-flex}
    조건 = html.tab (= html.touch 이면서 폭 ≤1400, JS 가 붙인다). 데스크톱(마우스)은 한 줄도 안 바뀐다.
    지도가 가로 100% · 세로 약 750. 기록(왼쪽)·도시 상세(오른쪽)는 지도 위에 얹는 **서랍**이라 열고 닫아도 지도 크기가 안 변한다(재피팅 없음).
    설정성 단추(세이브·자동 전쟁·테마·도움말·진단·메인메뉴)는 헤더의 ☰ 메뉴로 모았다. 월 달력은 숫자만 한 줄로 남긴다. */
-#bMenu,.hdl,#legbtn{display:none}
-html.tab #bMenu{display:block}
+/* ☰ 는 PC 에도 있다 (v3.145 · 기존 단추는 그대로 두고 메뉴를 더한다) */
+.hdl,#legbtn{display:none}
 html.tab .hdl{display:block}
 html.tab #legbtn{display:inline-flex;align-items:center}
 html.tab #bLog,html.tab #bTheme,html.tab #bHelp,html.tab .foot{display:none}
@@ -346,7 +346,8 @@ header{display:flex;align-items:stretch;background:var(--ink2);
    ⚠️ 두 단으로 나눈 이유: 1400 에서 한 번에 18px 까지 내리면 넓은 화면에서 못생기고,
       1180 에서 21px 로는 아직 안 들어간다. **재서 나눈 값이다** (아래 실측표).
    ⚠️ 세로 여백(10.5px)은 안 건드린다 — 머리띠 높이가 바뀌면 지도 뷰포트가 같이 흔들린다. */
-@media (max-width:1400px){
+/* 🔥 **경계를 1400 → 1500 으로 올렸다 (v3.148 · 머리띠)** — 1401~1500px 창에서 문서가 100~160px 넘쳐 1440 창은 턴 종료 단추가 화면 밖이었다(미디어쿼리가 ≤1400 부터라 이 구간은 압축 전 값이었다). 위 "1280px 넘침"과 같은 압축 규칙을 이 구간에도 건다. 태블릿 레이아웃 판정(`matchMedia("(max-width:1400px)")` · html.tab)은 별개라 그대로. */
+@media (max-width:1500px){
   .hcell{padding:10.5px 8px}
   .hcell .lb{font-size:13.5px}
   .hcell .vl{font-size:21px}
@@ -355,7 +356,7 @@ header{display:flex;align-items:stretch;background:var(--ink2);
   .res .hcell{min-width:96px}
   .res .ic{font-size:15px;margin-right:4px}
   #hFac{min-width:82px}
-  .hbtn{padding:0 11px;font-size:19px}
+  .hbtn{padding:0 6px;font-size:19px}   /* 11 → 6: PC 에 ☰ 가 더해진 폭(≈40px)을 단추 다섯의 여백에서 거둔다 (v3.145 · 7 로는 1280px 184년 세력 칸이 1px 좁았다) */
   #btnTurn{padding:0 20px;font-size:19px}
 }
 @media (max-width:1180px){
@@ -1359,6 +1360,9 @@ img.por,img.por-lg{object-fit:cover;object-position:50% 18%;image-rendering:auto
   display:inline-flex;align-items:center;gap:6px;border-bottom:2px solid var(--gold);
   border-bottom-color:rgba(247,182,46,.45)}
 .footbtn:hover{color:var(--gold);border-bottom-color:var(--gold)}
+/* .touchonly 는 위쪽(194행)에 있어 .footbtn 의 display 에 진다 — PC 하단 바에 '진단' 이 새어 나왔다 (v3.145 에서 바로잡음) */
+.footbtn.touchonly{display:none}
+html.touch .footbtn.touchonly{display:inline-flex}
 .footbtn .go{font-size:12px;color:var(--gold);font-weight:700;letter-spacing:.5px}
 
 /* ═══ NPC 턴 진행 (v3.61) ═══
@@ -1787,8 +1791,10 @@ img.por,img.por-lg{object-fit:cover;object-position:50% 18%;image-rendering:auto
 /* 🔥 **정수 물리 픽셀 스냅** (v3.140 · 1011 병사 흐림) — 도트 1칸이 화면에서 1.68px 같은 비정수가 되면 최근접이든 보간이든 가장자리가 번진다.
    `g3Snap`(fitGrid 끝)이 칸당 **정수 물리 px n** 을 골라 `--g3w` = 96n/dpr 을 넣고(폭 = 96 칸 × n 물리 px),
    위치의 소수 부분은 `--sx`·`--sy` 가 물리 격자로 끌어당긴다. 시트는 ×4 라 n≤4 는 정확히 한 칸 = n×n 픽셀이다 → `pixelated`. */
-.unit .uart.g3{width:var(--g3w, calc(100% * var(--ua,1)));height:auto;aspect-ratio:3/2;object-fit:fill;image-rendering:pixelated;
-  transform:translate(calc(-50% + var(--sx, 0px)), calc(7.8% + var(--sy, 0px)));pointer-events:none}
+/* 🔥 칸 크기·발 피벗은 병종마다 다르다(v3.149 · 기병 134×90 · 피벗 y 86) — 렌더 템플릿이 `--gar`(칸 가로/세로)·`--gfy`(칸 바닥~발 = (칸높이−foot)/칸높이)를 넣는다.
+   96×64 · foot 59 는 3/2 · 7.8% 와 같다(기본값). */
+.unit .uart.g3{width:var(--g3w, calc(100% * var(--ua,1)));height:auto;aspect-ratio:var(--gar, 3/2);object-fit:fill;image-rendering:pixelated;
+  transform:translate(calc(-50% + var(--sx, 0px)), calc(var(--gfy, 7.8%) + var(--sy, 0px)));pointer-events:none}
 /* 잔상(공격 중 직전 프레임) — 같은 자리에 겹쳐 앉고 `g3Ghost` 가 알파를 깎는다 */
 .unit .uart.ghost{pointer-events:none}
 /* ── 축약 단계 (v3.22) — 격자가 커지면 셀이 작아진다. 무엇을 버릴지 순서를 정해 둔다 ── */
@@ -2377,7 +2383,7 @@ const MOVE_MS = 300, MOVE_STEPS = 6;
    히트스톱 40/70/110 은 그대로. 타격 순간 = G3_WIND+120 ms (공격 클립 · 피격 첫 hold · impactMs 가 이 한 상수를 본다). */
 const G3_WIND = 100;
 /* 🔥 14프레임 규격은 **병종 공통**이다 (§0-H) — 이름 순서와 박자표를 한 벌만 둔다. 병종마다 갈리는 건 시트·box·head·chest·hit·trace 뿐.
-   박자(ms)는 atlas.timing_ms 그대로(보병·창병 같음). 이동은 `MOVE_MS/4`, 공격 앞에 `idle1` 한 칸(윈드업). */
+   박자(ms)는 atlas.timing_ms 그대로(보병·궁병 같음). 이동은 `MOVE_MS/4`, 공격 앞에 `idle1` 한 칸(윈드업). */
 const G3_NAMES = ["idle1","idle2","walk1","walk2","walk3","walk4","atk1","atk2","atk3","hit","guard","fall1","fall2","fall3"];
 const G3_KEY4 = ["#5a0040","#a0007a","#e000b4","#ff80e0"];
 const G3_CLIP = () => ({
@@ -2402,7 +2408,7 @@ const UNIT_ART = {
     infantry: {
       sheet: "assets/unit/g3/infantry.png", cell: [96, 64], upscale: 4,
       names: G3_NAMES, key: G3_KEY4,
-      box: 1.9, head: 0.69,
+      box: 1.9, head: 0.69, foot: 59,      // foot = 발 피벗 y(칸 좌표) — 칸 바닥에서 발까지가 토큰 바닥에 닿게 내리는 양(`--gfy`)
       trace: "slash",        // 공격이 뻗을 때 얹는 궤적 — 베기 호(`fxSlash`)
       hit: { atk1:[70,32], atk2:[92,44], atk3:[81,43] },     // 공격자 극 끝 — 셀 좌표 · 오른쪽 보기 (atlas.hit_point). 이펙트 앵커로는 안 쓴다(아래 chest)
       /* 🔥 **이펙트 앵커 = 맞는 쪽 몸통 중심** (PD: 극 끝이 아니라 맞는 몸). 셀 좌표 — 인물 키 40px · 발 (48,59) 에서 가슴 높이.
@@ -2414,26 +2420,60 @@ const UNIT_ART = {
       clip: G3_CLIP(),
       impactMs: G3_WIND + 120,      // 공격 클립에서 atk2 가 뜨는 때 — 피격 클립의 첫 hold·연출 지연이 이 값을 본다 (둘이 갈리면 맞는 박자가 어긋난다)
     },
-    /* 🔥 **창병 (art 키 `spear`)** — 14프레임 · 96×64 · 피벗 (48,59) · 인물 40px(창끝 포함 48px). 시트 `assets/unit/g3/spear.png` + `spear_atlas.json`.
-       ⚠️ **규칙에는 창병이 없다** — `UTYPE` 는 보병(槍)·기병·궁병·수군뿐이고 보병이 곧 창병이다(`TYPE_TRIANGLE` 도 `infantry`).
-          그래서 `spear` 는 **병종 키가 아니라 그림 키**다: 부대의 `u.art` 가 `"spear"` 면 `UNIT_ART.artKey(u)` 가 이 항목을 고른다.
-          규칙(`u.type`)은 그대로 infantry — 어떤 부대가 창병 그림을 쓰는지는 아직 아무도 안 정했다(편성이 `art` 를 채울 일).
-       ⚠️ `head` 는 두건 윗끝 y=18 에서 중심을 y≈22 로 보고 (59−22)/96×1.9 = 0.73 (atlas `head.y=20` 은 근사라 0.77 이 나오지만 윗끝에 맞췄다).
-       `hit` = atlas.hit_point · 찌름 극 끝이 atk2 **(87,26)**, 맞는 쪽 `chest` 는 **(49,42)**. 창끝이 칸 안(x≤87)이라 `box 1.9` 그대로 쓴다. */
-    spear: {
-      sheet: "assets/unit/g3/spear.png", cell: [96, 64], upscale: 4,
+    /* 🔥 **궁병 (v3.147 · 쇠뇌)** — 14프레임 · 96×64 · 피벗 (48,59) · 인물 41px(윗끝 y=18 ~ 발 y=59). 시트 `assets/unit/g3/archer.png` + `archer_atlas.json`
+       (원본 AIGen/1010/refs/redesign/g3/arc/final/ — 인계 `HANDOFF_dev.md`). 키 4색·박자표·14프레임 순서는 보병과 같다(`G3_NAMES`/`G3_KEY4`/`G3_CLIP()`).
+       ⚠️ `head` .71 = 머리 중심이 인물 윗끝 + 5px. `chest` (52,34) = 맞는 쪽 이펙트 앵커.
+       ⚠️ `hit` 은 **쇠뇌 총구**(오른쪽 끝) — 볼트 이펙트(`fxBolt`)의 출발점은 `hit.atk2`. 원본의 볼트 조각(atk2 [75,25,95,30] · guard 금빛 볼트)은 시트에서 지웠다(몸에서 떨어진 파편) — 코드 이펙트가 그린다.
+       ⚠️ 걷기 4프레임은 PixelLab 원본(합성 아님) · 무너짐2 는 fall1 을 발끝 기준 −68° 눕힌 합성 · 쇠뇌가 작아(40px) 활처럼 읽히는 건 원본 그대로. */
+    archer: {
+      sheet: "assets/unit/g3/archer.png", cell: [96, 64], upscale: 4,
       names: G3_NAMES, key: G3_KEY4,
-      box: 1.9, head: 0.73,
-      trace: "thrust",       // 찌름 궤적(`fxThrust`) — 이펙트 시트(`FX_SHEET.thrust`)가 올 때까지는 아무것도 안 그린다
-      hit: { atk1:[72,13], atk2:[87,26], atk3:[84,20] },
-      chest: [49, 42],
+      box: 1.9, head: 0.71, foot: 59,
+      trace: "shoot",        // 공격이 뻗을 때 얹는 궤적 — 총구 섬광 + 볼트(`fxBolt`)
+      hit: { atk1:[64,27], atk2:[70,27], atk3:[62,39] },
+      chest: [52, 34],
+      clip: G3_CLIP(),
+      impactMs: G3_WIND + 120,
+    },
+    /* 🔥 **기병 (v3.149 · 기수+말)** — 칸 **134×90** · 피벗 (67,86) · 인물 키 82px(윗끝 y=4 ~ 발 y=86). 시트 `assets/unit/g3/cavalry.png` + `cavalry_atlas.json`
+       (원본 AIGen/1010/refs/redesign/g3/cav/final/ — 인계 `HANDOFF_dev.md`). 키 4색·박자표·14프레임 순서는 보병과 같다.
+       ⚠️ `box` 2.65 = 보병과 **같은 화소 배율**(1.9×134/96) — 칸이 넓은 만큼 상자를 키운다(그림 한 칸의 화면 크기가 보병과 같다).
+          기병을 더 크게 보이려면 이 값만 올린다(`head`·`foot` 은 칸 좌표라 그대로).
+       ⚠️ `head` 1.52 = (발 86 − 머리 중심 9)/134 × 2.65. `chest` (63,27). `hit` 은 창끝(셀 좌표 · 오른쪽 보기) — 이펙트 앵커로는 안 쓴다.
+       ⚠️ `trace` 없음 — 베기 호·볼트 없이 **돌진 먼지**(`fxDust`)가 궤적이다: 이동(walk1·walk3)·공격(atk1) 프레임에 들어올 때 뒷발굽에서.
+          `dust` = 뒷발굽 (60,86)(셀 좌표 · 오른쪽 보기 · 반전하면 `cell−60`).
+       ⚠️ 걷기 4프레임은 원본(합성 아님) · 무너짐2·3 기수는 합성(말 꿇음 + 낙마가 읽히는 정도) · 앞다리 한쪽 굽음은 못 고쳤다(인계). */
+    cavalry: {
+      sheet: "assets/unit/g3/cavalry.png", cell: [134, 90], upscale: 4,
+      names: G3_NAMES, key: G3_KEY4,
+      box: 2.65, head: 1.52, foot: 86,
+      dust: [60, 86],
+      hit: { atk1:[99,36], atk2:[128,29], atk3:[103,36] },
+      chest: [63, 27],
+      clip: G3_CLIP(),
+      impactMs: G3_WIND + 120,
+    },
+    /* 🔥 **수군 도보 (v3.149)** — 항구 **밖** 육지 전장에서 서는 수군(`artKey` 가 `BAT.port` 로 고른다). 96×64 · 피벗 (48,59) · 인물 40px(머리띠 윗끝 y=19 · 창끝 y=11).
+       시트 `assets/unit/g3/navy_foot.png` + `navy_foot_atlas.json`(원본 g3/nav_foot/final/). 몸통 조끼는 고정색(세력색 안 번진다) · 무너짐 1~3 은 idle1 회전 합성.
+       ⚠️ `hit` 은 창끝(atk1·3 위로 선 창끝 · atk2 찌름 끝). `trace` 없음 — 보병 베기 호는 안 쓴다(창이라 맞지 않는다). 항구 전장(배)은 아직 그림이 없다 — 옛 그림 그대로. */
+    navy_foot: {
+      sheet: "assets/unit/g3/navy_foot.png", cell: [96, 64], upscale: 4,
+      names: G3_NAMES, key: G3_KEY4,
+      box: 1.9, head: 0.69, foot: 59,
+      hit: { atk1:[56,11], atk2:[85,28], atk3:[61,12] },
+      chest: [47, 34],
       clip: G3_CLIP(),
       impactMs: G3_WIND + 120,
     },
   },
-  /* 부대가 **어느 그림 키**를 쓰는가 — 단일 문. `u.art`(그림 키 덮어쓰기)가 표에 있으면 그것, 아니면 병종 `u.type`.
+  /* 부대가 **어느 그림 키**를 쓰는가 — 단일 문. `u.art`(그림 키 덮어쓰기 · 지금은 아무 부대도 안 갖는다 — 창병 폐기 뒤에도 일반 길로 남긴다)가 표에 있으면 그것, 아니면 병종 `u.type`.
      🔥 그림을 읽는 곳은 전부 이 키를 지난다 (src · box · headY · clipOf · g3Of · 이펙트). 규칙은 `u.type` 만 본다 — 그림을 바꿔도 결과 불변. */
-  artKey(u){ return (u.art && this.g3[u.art]) ? u.art : u.type; },
+  artKey(u){
+    if(u.art && this.g3[u.art]) return u.art;
+    /* 🔥 수군은 **전장이 물일 때만 배**다(`BAT.port`) — 항구 밖 육지 전장이면 도보 그림. 배 그림은 아직 없어(보류) 항구 전장은 옛 그림 그대로(`navy` 키). 규칙은 `u.type` 만 본다 */
+    if(u.type === "navy" && !(BAT && BAT.port) && this.g3.navy_foot) return "navy_foot";
+    return u.type;
+  },
   /* 🔥 **타격 3단** (HANDOFF §0-H 표 · 사용자 `중`) — 히트스톱 40/70/110ms · 흔들림 2/4/6px · 흰 플래시 2/3/4프레임.
      플래시의 한 프레임은 1/60초. `knock` 는 96×64 칸 픽셀 단위 넉백 거리(표에 없는 추가값), `spike` 는 임시 불꽃 배율.
      ⚠️ 단계는 `hitTier(u, dm)` 한 곳이 정한다 — 피해 대 초기 병력 비율. 문턱은 `HIT_TIER`. */
@@ -15325,7 +15365,10 @@ function playUnitArt(now){
     if(g3){
       const prev = img.src;
       img.src = UNIT_ART.src(img.dataset.type, mine, img.dataset.st, img._fi, cssRGB(fc));
-      img.style.translate = "0 " + (G3_BOB[cl.f[img._fi]] || 0) + "px";   // 호흡·걸음 — 도트가 거의 같은 자세라 코드가 1~2px 들썩인다
+      img.style.translate = "0 " + (G3_BOB[cl.f[img._fi]] || 0) + "px";
+      const gd = UNIT_ART.g3Of(img.dataset.type);
+      if(gd && gd.dust && DUST_AT[cl.f[img._fi]] && (img.dataset.st === "이동" || img.dataset.st === "공격"))
+        fxDust(img, gd, UNIT_ART.view(mine, img.dataset.st) !== "앞", now);   // 기병 돌진 먼지 — 발굽 뒤   // 호흡·걸음 — 도트가 거의 같은 자세라 코드가 1~2px 들썩인다
       /* 잔상 — 공격이 **뻗는 동안**(atk2·atk3 로 넘어갈 때) 직전 프레임을 남긴다. idle→atk1 에는 안 남긴다(꼬리가 없다) */
       if(img.dataset.st === "공격" && /^atk[23]$/.test(cl.f[img._fi])) g3Ghost(img, prev);
       continue;
@@ -15437,13 +15480,16 @@ function fxHitG3(layer, e, vu){
     try { img.animate([{ filter:white }, { filter:white }], { duration: T.flash * 1000 / 60, delay: imp }); } catch(err){}
   }
   /* 타격점 = 맞는 쪽 몸통 중심(`g.chest`) — 극 끝이 아니다. 크기는 시트 칸 × 렌더 배율 (아래 `FX_SHEET`) */
+  let hx = 0, hy = 0;
   if(img){
     const r = img.getBoundingClientRect(), k = r.width / g.cell[0];
-    fxStrike(layer, r.left + r.width * g.chest[0] / g.cell[0], r.top + r.height * g.chest[1] / g.cell[1], e.tier || 1, imp, e.seq, k);
+    hx = r.left + r.width * g.chest[0] / g.cell[0]; hy = r.top + r.height * g.chest[1] / g.cell[1];
+    fxStrike(layer, hx, hy, e.tier || 1, imp, e.seq, k);
   }
   const by = e.by && uById(e.by.uid);
-  const gb = by && UNIT_ART.g3Of(UNIT_ART.artKey(by));     // 공격자의 그림 — 궤적은 **공격자 병종이** 고른다 (보병 베기 호 · 창병 찌름)
-  if(gb) (gb.trace === "thrust" ? fxThrust : fxSlash)(layer, e.by, gb);
+  const gb = by && UNIT_ART.g3Of(UNIT_ART.artKey(by));     // 공격자의 그림 — 궤적은 **공격자 그림이** 고른다 (`trace`: 보병 slash 베기 호 · 궁병 shoot 볼트 · 나머지는 아무것도 안 그린다)
+  if(gb && gb.trace === "slash") fxSlash(layer, e.by, gb);
+  else if(gb && gb.trace === "shoot" && img) fxBolt(layer, e.by, gb, hx, hy);
 }
 /* ═══ 이펙트 시트 재생 (G3 · 코드 도형을 시트로 교체) ═══════════════════════════════
    🔥 시트는 **별도 고정 팔레트**(디더 허용·외곽선 없음)라 천 키 치환을 안 거친다. `assets/fx/*.png` 는
@@ -15456,7 +15502,9 @@ const FX_SHEET = {
   weak:   { png:"assets/fx/hit_weak.png",   cell:[64,64], anchor:[32,32], ms:[50,50,60,70],           from:1 },
   mid:    { png:"assets/fx/hit_mid.png",    cell:[64,64], anchor:[32,32], ms:[40,50,70,60,60],        from:0 },
   strong: { png:"assets/fx/hit_strong.png", cell:[64,64], anchor:[32,32], ms:[50,60,70,80,70,60],     from:0 },
-  slash:  { png:"assets/fx/slash.png",      cell:[96,64], anchor:[48,32], ms:[50,80,70],              from:0 }   // 오른쪽 위→아래 호 — 왼쪽을 보면 좌우 반전
+  slash:  { png:"assets/fx/slash.png",      cell:[96,64], anchor:[48,32], ms:[50,80,70],              from:0 },  // 오른쪽 위→아래 호 — 왼쪽을 보면 좌우 반전
+  dust:   { png:"assets/fx/dust.png",       cell:[104,32], anchor:[100,31], ms:[50,60,70,70,60],    from:0, to:4 },   // 기병 돌진 먼지 — 5프레임 중 4번(마지막 · faint)은 안 그린다. 앵커 = 지면선 오른쪽 끝(뒷발굽) — 먼지는 왼쪽(뒤)으로 퍼진다, 왼쪽을 보면 반전
+  bolt:   { png:"assets/fx/bolt.png",       cell:[96,64], anchor:[8,32],  ms:[40,50,50,60],           from:0 }   // 노 발사 — 앞 2칸 총구 섬광 · 뒤 2칸 볼트 비행(이동이 구워져 있다). 오른쪽(+x) 향함, 왼쪽은 반전(앵커 x 는 96−8)
 };
 /* 한 번 재생하고 스스로 지워진다. `delay` ms 동안은 안 보인다 (WAAPI 키프레임 하나로 — 프레임마다 `steps(1,end)` 로 값이 유지된다). */
 function fxSheet(layer, id, x, y, delay, k, opt){
@@ -15464,23 +15512,29 @@ function fxSheet(layer, id, x, y, delay, k, opt){
   /* 🔥 배율을 **정수 물리 px** 로(v3.140) — 시트 한 칸이 n 물리 px 이 되고 왼쪽 위도 물리 격자에 앉는다 (번짐 방지) */
   const dpr = window.devicePixelRatio || 1;
   k = Math.max(1, Math.round(k * dpr)) / dpr;
-  const d = FX_SHEET[id], n = d.ms.length, w = d.cell[0] * k, h = d.cell[1] * k;
+  const d = FX_SHEET[id], n = d.ms.length, w = d.cell[0] * k, h = d.cell[1] * k, nPlay = d.to || n;   // `to` = 앞에서 몇 프레임까지 그리나(마지막이 faint 인 시트)
   const sn = v => Math.round(v * dpr) / dpr;
+  /* 🔥 좌우 반전이면 앵커 x 도 `w − 앵커` 로 뒤집힌다(칸 가운데 기준 거울) — 베기 호처럼 가운데 앵커는 같고, 볼트(앵커 8)는 다르다.
+     `opt.rot`(라디안)이면 **앵커 점을 축으로** 돌린다 (시트는 +x 를 향한다; 반전했으면 −x 를 향하므로 호출 쪽이 각을 그에 맞춰 준다). */
+  const ax = (opt.flip ? d.cell[0] - d.anchor[0] : d.anchor[0]) * k, ay = d.anchor[1] * k;
+  let tf = opt.flip ? "scaleX(-1)" : "";
+  if(opt.rot){ const px = ax - w / 2, py = ay - h / 2; tf = `translate(${px.toFixed(3)}px,${py.toFixed(3)}px) rotate(${opt.rot.toFixed(4)}rad) translate(${(-px).toFixed(3)}px,${(-py).toFixed(3)}px) ` + tf; }
   const el = document.createElement("div");
-  el.style.cssText = `position:fixed;left:${sn(x - d.anchor[0] * k).toFixed(3)}px;top:${sn(y - d.anchor[1] * k).toFixed(3)}px;width:${w.toFixed(3)}px;height:${h.toFixed(3)}px;`
+  el.style.cssText = `position:fixed;left:${sn(x - ax).toFixed(3)}px;top:${sn(y - ay).toFixed(3)}px;width:${w.toFixed(3)}px;height:${h.toFixed(3)}px;`
     + `background:url(${d.png}) 0 0/${(n * w).toFixed(3)}px ${h.toFixed(3)}px no-repeat;image-rendering:pixelated;pointer-events:none;opacity:0`
-    + (opt.flip ? ";transform:scaleX(-1)" : "");
+    + (tf ? ";transform:" + tf : "");
   if(opt.tag) el.dataset.fxs = opt.tag;
   layer.appendChild(el);
-  const dur = d.ms.slice(d.from).reduce((p, v) => p + v, 0), tot = delay + dur, al = opt.alpha == null ? 1 : opt.alpha;
+  const dur = d.ms.slice(d.from, nPlay).reduce((p, v) => p + v, 0), tot = delay + dur, al = opt.alpha == null ? 1 : opt.alpha;
   const kf = [{ opacity:0, offset:0, easing:"steps(1, end)" }];
   let t = delay;
-  for(let i = d.from; i < n; i++){
+  for(let i = d.from; i < nPlay; i++){
     kf.push({ opacity:al, backgroundPosition:`${-i * w}px 0`, offset: Math.min(.999, Math.max(.001, t / tot)), easing:"steps(1, end)" });
     t += d.ms[i];
   }
   kf.push({ opacity:0, offset:1 });
   fxAnimate(el, kf, tot, "linear");   // ⚠️ 옵션의 easing 은 효과 **전체**에 걸린다 — 프레임 유지는 키프레임마다 steps(1,end) 로
+  return el;
 }
 /* 타격 이펙트 — 단계(1~3)가 시트를 고른다 (커지는 게 아니라 **단계별 시트**). 앵커는 맞는 쪽 몸통 중심. */
 function fxStrike(layer, x, y, tier, delay, seq, k){
@@ -15497,18 +15551,30 @@ function fxSlash(layer, by, g){
   fxSheet(layer, "slash", r.left + r.width * cx / g.cell[0], r.top + r.height * 38 / g.cell[1], SLASH_AT, k * SLASH_SCALE,
           { flip: !right, alpha: SLASH_ALPHA, tag: "s" + by.uid });
 }
-/* 찌름 궤적 — 창병 공격자용 훅. 앵커 = 공격자 칸의 atk2 창끝(`g.hit.atk2` (87,26)), 왼쪽을 보면 반전, 타격 `THRUST_AT` ms 전에 뜬다.
-   🔥 **시트가 없으면 아무것도 안 그린다** — `FX_SHEET.thrust`(`assets/fx/thrust.png` + atlas)가 올 때 표에 한 줄만 더하면 켜진다
-   (`install_g3.mjs fx` 에 시트가 들어오면 atlas 대로 `ms`·`cell`·`anchor` 를 `FX_SHEET` 에 옮길 것). 한 공격자에 한 번만. */
-const THRUST_AT = 100;
-function fxThrust(layer, by, g){
-  if(!FX_SHEET.thrust) return;
+/* 볼트 — 궁병 공격자용 궤적(`trace:"shoot"`). 발사 시점(타격 `BOLT_AT`=`impactMs−90` 전 ≈ 총구 섬광 2칸 길이)에 공격자 총구(`g.hit.atk2`)에서
+   섬광 → 볼트가 **맞는 쪽 몸통(`chest`) 방향**으로 날아간다. 방향 = atan2(목표−총구) — 시트는 +x 를 향하므로 돌려 맞춘다(왼쪽을 보면 반전 + 앵커 x 는 w−8).
+   크기는 보병 이펙트와 같은 정수 물리 px 스냅(`fxSheet`) × `BOLT_SCALE` — 섬광 지름 27px 이 인물 키(41px)의 .66배라 그대로 쓴다. 한 공격자에 한 번만. */
+const BOLT_SCALE = 1;
+function fxBolt(layer, by, g, tx, ty){
   const bi = document.querySelector(`#battle .unit[data-u="${by.uid}"] .uart`);
-  if(!bi || layer.querySelector(`[data-fxs="t${by.uid}"]`)) return;
-  const tip = g.hit.atk2, r = bi.getBoundingClientRect(), k = r.width / g.cell[0], right = by.side === (BAT && BAT.player);
-  const cx = right ? tip[0] : g.cell[0] - tip[0];
-  fxSheet(layer, "thrust", r.left + r.width * cx / g.cell[0], r.top + r.height * tip[1] / g.cell[1], THRUST_AT, k,
-          { flip: !right, tag: "t" + by.uid });
+  if(!bi || layer.querySelector(`[data-fxs="b${by.uid}"]`)) return;
+  const m = g.hit.atk2, r = bi.getBoundingClientRect(), k = r.width / g.cell[0], right = by.side === (BAT && BAT.player);
+  const mx = r.left + r.width * (right ? m[0] : g.cell[0] - m[0]) / g.cell[0], my = r.top + r.height * m[1] / g.cell[1];
+  const rot = right ? Math.atan2(ty - my, tx - mx) : Math.atan2(my - ty, mx - tx);     // 반전 시트는 −x 를 향한다 — 각을 거울에 맞춘다
+  return fxSheet(layer, "bolt", mx, my, Math.max(0, g.impactMs - 90), k * BOLT_SCALE, { flip: !right, rot, tag: "b" + by.uid });
+}
+/* 🔥 **돌진 먼지** (v3.149 · 기병) — 이동(walk1·walk3)·공격(atk1) 프레임에 들어올 때 뒷발굽(`g.dust`)에서 한 번 재생한다.
+   먼지 시트는 인물 위 `#bfx` 층에 **칸 밖까지** 그려진다(칸이 아니라 화면 고정층). 크기는 인물과 같은 렌더 배율 k(= 그려진 칸 폭/칸 가로)에 정수 물리 px 스냅(`fxSheet`).
+   ⚠️ 이동 중 걸음마다 쌓이지 않게 부대마다 최소 `DUST_GAP` ms 간격(`img._dustT`). 반환 = 그렸는가. */
+const DUST_GAP = 120, DUST_AT = { walk1:1, walk3:1, atk1:1 };
+function fxDust(img, g, right, now){
+  const layer = document.getElementById("bfx");
+  if(!layer || !g.dust || (img._dustT && now - img._dustT < DUST_GAP)) return false;
+  const r = img.getBoundingClientRect(), k = r.width / g.cell[0];
+  if(!r.width) return false;
+  img._dustT = now;
+  fxSheet(layer, "dust", r.left + r.width * (right ? g.dust[0] : g.cell[0] - g.dust[0]) / g.cell[0], r.top + r.height * g.dust[1] / g.cell[1], 0, k, { flip: !right });
+  return true;
 }
 /* ── 성문 타격 ── 병력이 아니라 **구조물**이 맞는 것이라 색을 달리한다 */
 function fxGateHit(layer, e){
@@ -18565,7 +18631,7 @@ function unitHTML(u){
   const planFull = myPlan && BAT.plan.filter(Boolean).length >= BAT.slotN;
   const idle = myPlan && slotNo < 0 && planFull;
   return `<div class="unit ${u.side===P?"":"foe"} ${BAT.sel===u.uid?"sel2":""} ${BAT.inspect===u.uid?"insp":""} ${idle?"noslot":""}"
-      style="border-color:${bd};--ua:${UNIT_ART.box(UNIT_ART.artKey(u)).toFixed(3)};--uh:${UNIT_ART.headY(UNIT_ART.artKey(u)).toFixed(3)}" data-u="${u.uid}">
+      style="border-color:${bd};--ua:${UNIT_ART.box(UNIT_ART.artKey(u)).toFixed(3)};--uh:${UNIT_ART.headY(UNIT_ART.artKey(u)).toFixed(3)}${(g3c => g3c ? `;--gar:${g3c.cell[0]} / ${g3c.cell[1]};--gfy:${(100 * (g3c.cell[1] - g3c.foot) / g3c.cell[1]).toFixed(3)}%` : "")(UNIT_ART.g3Of(UNIT_ART.artKey(u)))}" data-u="${u.uid}">
     ${slotNo >= 0 ? `<span class="uslot" title="${slotNo+1}번째로 해소된다">${slotNo+1}</span>` : ""}
     ${idle ? `<span class="uidle" title="슬롯 ${BAT.slotN}개가 다 찼다 — 이 부대는 이번 턴 명령을 못 받는다">쉼</span>` : ""}
     <span class="face ${face}" style="color:${bd}" aria-hidden="true">${face==="up"?"▲":"▼"}</span>
@@ -20203,7 +20269,13 @@ if(localStorage.getItem("sk3_proto_nolog")) document.body.classList.add("nolog")
   if(mq.addEventListener) mq.addEventListener("change", sync); else mq.addListener(sync);
   sync();
 
-  /* ── ☰ 메뉴 — 세이브 · 자동 전쟁 · 테마 · 도움말 · 진단 · 메인메뉴. 각 단추는 **원래 단추를 그대로 누른다**(처리는 한 곳) ── */
+})();
+
+/* ═══ ☰ 메뉴 (v3.143 아이패드 · v3.145 PC 에도) ═══ */
+(() => {
+  /* ── ☰ 메뉴 — 세이브 · 자동 전쟁 · 테마 · 도움말 · 진단 · 메인메뉴. 각 단추는 **원래 단추를 그대로 누른다**(처리는 한 곳) ──
+     v3.145: 아이패드(html.tab) 전용이던 것을 PC 에도 — 헤더 ☰ + Esc. PC 는 기존 단추(세이브·테마·도움말·자동 전쟁)를 그대로 두고 메뉴를 더한다. 성능 진단(#fDiag)은 터치에만 있어 PC 메뉴에선 빠진다 */
+  const root = document.documentElement;
   const pm = document.createElement("div"); pm.id = "pmenu"; document.body.appendChild(pm);
   const close = () => pm.classList.remove("on");
   const btn = (id, label, extra, cls) => `<button class="pmb ${cls || ""}" id="${id}">${label}${extra ? `<i>${extra}</i>` : ""}</button>`;
@@ -20225,7 +20297,7 @@ if(localStorage.getItem("sk3_proto_nolog")) document.body.classList.add("nolog")
       ${awOn ? btn("pmAuto", "자동 전쟁", S && S.autoWar ? "켜짐" : "꺼짐") : ""}
       ${btn("pmTheme", "테마", light ? "라이트 → 다크" : "다크 → 라이트")}
       ${btn("pmHelp", "도움말")}
-      ${btn("pmDiag", "성능 진단")}
+      ${root.classList.contains("touch") && $("#fDiag") ? btn("pmDiag", "성능 진단") : ""}
       ${btn("pmExit", "메인메뉴로 나가기", "", "danger")}
       ${btn("pmClose", "닫기")}
       <div class="pmv">빌드 ${window.__BUILD || "dev"}</div></div>`;
@@ -20233,12 +20305,26 @@ if(localStorage.getItem("sk3_proto_nolog")) document.body.classList.add("nolog")
     if(awOn) $("#pmAuto").onclick = () => { via("#autowar"); render("main"); };
     $("#pmTheme").onclick = () => { via("#bTheme"); render("main"); };
     $("#pmHelp").onclick = () => { close(); via("#bHelp"); };
-    $("#pmDiag").onclick = () => { close(); via("#fDiag"); };
+    if($("#pmDiag")) $("#pmDiag").onclick = () => { close(); via("#fDiag"); };
     $("#pmExit").onclick = () => render("exit");
     $("#pmClose").onclick = close;
   };
   pm.addEventListener("click", e => { if(e.target === pm) close(); });
   $("#bMenu").onclick = () => { if(!S) return; render("main"); pm.classList.add("on"); };
+
+  /* Esc — 메뉴가 열려 있으면 닫고, 아니면 연다. 열린 창(모달·확인·전투·시작 화면·지목 중)이 있으면 건드리지 않는다 (기존 Esc 동작 우선) */
+  const busy = () => {
+    if(typeof movePlanner !== "undefined" && movePlanner) return true;
+    for(const id of ["mask","ask","tpick","advtop","tour","title","battle"]){ const e = document.getElementById(id); if(e && !e.classList.contains("off")) return true; }
+    return false;
+  };
+  addEventListener("keydown", e => {
+    if(e.key !== "Escape" || e.repeat || e.ctrlKey || e.altKey || e.metaKey) return;
+    if(pm.classList.contains("on")){ close(); e.preventDefault(); return; }
+    if(!S || busy()) return;
+    const t = e.target; if(t && /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)) return;
+    render("main"); pm.classList.add("on"); e.preventDefault();
+  });
 })();
 
 if(TEST_BATTLE) randomBattle(); else titleScreen();
@@ -20249,7 +20335,7 @@ addEventListener("resize", () => {
   fitTestBar();          // 시험 바가 줄바꿈되면 높이가 바뀐다 — 하단 조작부를 다시 비켜 준다
 });
 </script>
-<script>window.__BUILD="2f561470";</script>
+<script>window.__BUILD="ac49798a";</script>
 <script>
 /* PWA — 서비스워커(오프라인 시작) · 저장소 영속 요청. build_web.mjs 가 붙인다.
    v3.142 — 갱신 확인: 시작 · 포그라운드 복귀 때 registration.update() 와 version.txt(캐시 우회) 를 본다.
