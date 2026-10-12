@@ -198,6 +198,31 @@ html.touch .maphint .hm{display:none}
 html.touch .maphint .ht{display:inline}
 /* 제스처 중(v3.141) — 얼린 SVG 레이어 안에서 도는 애니메이션은 레이어를 매 프레임 다시 그리게 한다 */
 html.gesture .node.pickable rect{animation:none}
+/* 터치에서는 지도 <svg> 를 처음부터 자기 합성 레이어로 둔다(v3.142) — 제스처 첫 move 에서 레이어를 만들며 통째로 다시 그리는 끊김을 없앤다.
+   레이어 크기는 지도가 아니라 <svg> 요소(= 화면 크기) 라서 줌 배율과 무관하다. */
+html.touch svg.map{will-change:transform}
+.touchonly{display:none}
+html.touch .touchonly{display:inline-flex}
+/* ═══ 성능 진단 HUD (v3.142 · 실기 전용) — 층을 하나씩 끄고 켜서 어느 층이 버벅임인지 가린다 ═══ */
+#diag{position:fixed;right:8px;top:calc(8px + env(safe-area-inset-top));z-index:99998;background:rgba(10,8,6,.92);
+  border:2px solid var(--gold);padding:8px 10px;font-size:14px;max-width:min(420px,60vw);display:none}
+#diag.on{display:block}
+#diag .dfps{font-weight:800;color:var(--gold);margin-bottom:6px;white-space:nowrap}
+#diag .dchips{display:flex;flex-wrap:wrap;gap:5px}
+#diag button{background:var(--paper);border:1px solid var(--line2);color:var(--tx);padding:7px 10px;font-size:14px}
+#diag button.offl{background:var(--vermilion);color:#fff;text-decoration:line-through}
+#newver{position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:99999;
+  background:var(--gold);color:var(--onacc);font-weight:800;padding:12px 22px;border:0;font-size:17px;box-shadow:0 4px 0 rgba(0,0,0,.5)}
+html.lay-off-fog #gFog{display:none}
+html.lay-off-cloud #gFog>rect:nth-child(2){display:none}
+html.lay-off-border #gBorder{filter:none}
+html.lay-off-relief #gLandFill image,html.lay-off-relief #terrPx{filter:none}
+html.lay-off-shade #gShade{display:none}
+html.lay-off-terr #terrPx{display:none}
+html.lay-off-label #gNode text{display:none}
+html.lay-off-sym #gNode,html.lay-off-sym #gPick,html.lay-off-sym #gCityHint{display:none}
+html.lay-off-edge #gGeo,html.lay-off-edge #gEdge{display:none}
+html.lay-off-allfx #svg *{filter:none!important;mask:none!important}
 .ttbub{position:fixed;z-index:99999;max-width:320px;padding:8px 12px;background:var(--paperhi);color:var(--tx);
   border:2px solid var(--gold);font-size:15px;line-height:1.45;white-space:pre-line;pointer-events:none;
   box-shadow:3px 3px 0 rgba(0,0,0,.5)}
@@ -2138,6 +2163,8 @@ img.por,img.por-lg{object-fit:cover;object-position:50% 18%;image-rendering:auto
        ⚠️ 처음엔 화면 왼쪽 아래에 **떠 있는 칩**으로 뒀다가 옮겼다 — 기록 목록 위를 덮었다.
           구석이되 아무 것도 가리지 않는 자리는 이미 있는 하단 바다 (세이브 문과 같은 줄). -->
   <button id="autowar" class="footbtn off" title="켜면 전투를 자동으로 결판내고 결과만 보여준다"></button>
+  <span id="fBuild" class="touchonly" style="color:var(--tx3)"></span>
+  <button id="fDiag" class="footbtn touchonly" title="성능 진단 — 지도 층을 하나씩 껐다 켜 본다">진단</button>
   <button id="fSaveBtn" class="footbtn" title="세이브 — 저장·불러오기·파일로 내보내기">
     <span id="fSave"></span><span class="go">세이브 ▸</span></button>
 </div>
@@ -9762,7 +9789,7 @@ const LABEL_RANK = { cap:1, big:2, pass:3, mid:4, small:5 };
 const LABEL_CFG  = { fsBase:15.5, fsOther:.94, fsMin:11, fsMax:20, gap:3, base:.3, asc:.9, desc:.22 };
 let _lblCtx = null;
 function layoutLabels(){
-  if(!mapBuilt) return;
+  if(!mapBuilt || window.__noLbl) return;   // __noLbl = 진단 HUD 의 이름표 스위치
   const wr = $("#wrap").getBoundingClientRect(), k = cam.k;
   if(!wr.width) return;
   const C = LABEL_CFG, M = 220;
@@ -13205,13 +13232,14 @@ function assignTarget(gid, to){
     if(tp.size === 1){
       const p = [...tp.values()][0]; if(!drag) return;
       if(!moved){ if(Math.hypot(p.x-p.x0, p.y-p.y0) < 4) return; moved = true; }   // 탭이 도시 단추로 가도록 4px 유예
-      camGestBegin(); cam.x = p.x-drag.x; cam.y = p.y-drag.y; clampCam(); camGestShow();
+      cam.x = p.x-drag.x; cam.y = p.y-drag.y; if(window.__noGestLayer) return applyCam(); camGestBegin(); clampCam(); camGestShow();
     } else if(tp.size === 2 && pb){
       const m = tmid(), r = wrap.getBoundingClientRect(), L = camLimits();
-      camGestBegin(); lastMid = m;
+      lastMid = m;
       cam.k = clamp(pb.k0 * (m.d/pb.d0), L.minK, L.maxK);                       // 연속 배율 — 보이기만. 사다리 칸은 손 뗄 때
       cam.x = (m.x-r.left) - pb.ux*cam.k; cam.y = (m.y-r.top) - pb.uy*cam.k;
-      clampCam(); camGestShow();
+      if(window.__noGestLayer) return applyCam();
+      camGestBegin(); clampCam(); camGestShow();
     } };
   const sched = () => { if(!raf) raf = requestAnimationFrame(flush); };
   /* 손가락 수가 바뀔 때 — 핀치가 끝나면 가장 가까운 정수 배율 칸으로 붙이고(중점 고정) 한 번 정식 렌더한다 */
@@ -20016,6 +20044,47 @@ if(localStorage.getItem("sk3_proto_nolog")) document.body.classList.add("nolog")
   document.addEventListener("touchcancel", () => { clearTimeout(timer); }, { passive:true });
 })();
 
+/* ═══ 성능 진단 HUD + 빌드 표기 (v3.142 · 터치 전용) ═══
+   PD 실기: Chrome 스로틀 프로파일은 Safari 의 SVG 필터·마스크 래스터 병목을 못 잡았다 → 실기에서 층을 하나씩 끄는 도구를 둔다.
+   하단 바 "진단" → 오른쪽 위 패널: FPS(최근 1초) · 최장 프레임 ms · 층 칩(눌러 끄기, 빨강+취소선 = 꺼짐). 상태는 localStorage 에 둔다(실패해도 동작). */
+(() => {
+  if(!document.documentElement.classList.contains("touch")) return;
+  const LAYERS = [["fog","안개"],["cloud","구름 결"],["border","경계 블러"],["relief","부조 필터"],["shade","등고 음영"],["terr","영토 면"],
+    ["label","이름표"],["sym","도시 기호"],["edge","길·수계 선"],["allfx","필터·마스크 전부"],["gest","제스처 레이어"]];
+  const KEY = "sk3_diag", root = document.documentElement;
+  let st = { on:false, off:[] };
+  try { const j = JSON.parse(localStorage.getItem(KEY) || "null"); if(j && Array.isArray(j.off)) st = { on:!!j.on, off:j.off.filter(k => LAYERS.some(l => l[0] === k)) }; } catch(e){}
+  if(!st.on) st.off = [];                       // 패널이 꺼져 있으면 층도 전부 켜 둔다 — 보이지 않는 스위치가 남지 않게
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch(e){} };
+  const apply = () => {
+    for(const [k] of LAYERS) if(k !== "gest") root.classList.toggle("lay-off-" + k, st.off.includes(k));
+    window.__noLbl = st.off.includes("label");
+    window.__noGestLayer = st.off.includes("gest");           // 끄면 제스처 중에도 옛 방식(매 move 정식 렌더)
+    try { if(S && mapBuilt) applyCam(); } catch(e){}
+  };
+  const bt = window.__BUILD || "dev";
+  const b = document.getElementById("fBuild"); if(b) b.textContent = "빌드 " + bt;
+  const box = document.createElement("div"); box.id = "diag";
+  box.innerHTML = '<div class="dfps">FPS - · 최장 - ms · 빌드 ' + bt + '</div><div class="dchips"></div>';
+  document.body.appendChild(box);
+  const chips = box.querySelector(".dchips"), fps = box.querySelector(".dfps");
+  const paint = () => { for(const c of chips.children) c.classList.toggle("offl", st.off.includes(c.dataset.k)); };
+  for(const [k, n] of LAYERS){
+    const c = document.createElement("button"); c.dataset.k = k; c.textContent = n;
+    c.onclick = () => { const i = st.off.indexOf(k); if(i < 0) st.off.push(k); else st.off.splice(i, 1); save(); paint(); apply(); };
+    chips.appendChild(c);
+  }
+  let frames = [], run = 0;
+  const loop = t => { if(!st.on){ run = 0; return; }
+    frames.push(t); while(frames.length && t - frames[0] > 1000) frames.shift();
+    let mx = 0; for(let i = 1; i < frames.length; i++) mx = Math.max(mx, frames[i] - frames[i-1]);
+    fps.textContent = "FPS " + frames.length + " · 최장 " + mx.toFixed(0) + "ms · 빌드 " + bt;
+    requestAnimationFrame(loop); };
+  const show = () => { box.classList.toggle("on", st.on); paint(); apply(); if(st.on && !run){ run = 1; frames = []; requestAnimationFrame(loop); } };
+  const tg = document.getElementById("fDiag"); if(tg) tg.onclick = () => { st.on = !st.on; if(!st.on) st.off = []; save(); show(); };
+  show();
+})();
+
 if(TEST_BATTLE) randomBattle(); else titleScreen();
 
 addEventListener("resize", () => {
@@ -20024,9 +20093,25 @@ addEventListener("resize", () => {
   fitTestBar();          // 시험 바가 줄바꿈되면 높이가 바뀐다 — 하단 조작부를 다시 비켜 준다
 });
 </script>
+<script>window.__BUILD="337e7464";</script>
 <script>
-/* PWA — 서비스워커(오프라인 시작) · 저장소 영속 요청. build_web.mjs 가 붙인다. */
-if("serviceWorker" in navigator && location.protocol !== "file:") addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+/* PWA — 서비스워커(오프라인 시작) · 저장소 영속 요청. build_web.mjs 가 붙인다.
+   v3.142 — 갱신 확인: 시작 · 포그라운드 복귀 때 registration.update() 와 version.txt(캐시 우회) 를 본다.
+   새 버전이면 "새 버전 — 탭하여 새로고침" 배너. 캐시 우선이라 가만두면 한 실행 늦게 바뀌므로 알려 준다. */
+if("serviceWorker" in navigator && location.protocol !== "file:"){
+  let reg = null, shown = false;
+  const banner = () => { if(shown) return; shown = true;
+    const b = document.createElement("button"); b.id = "newver"; b.textContent = "새 버전 — 탭하여 새로고침";
+    b.onclick = () => location.reload(); document.body.appendChild(b); };
+  const check = () => {
+    try { if(reg) reg.update().catch(() => {}); } catch(e){}
+    fetch("version.txt?_=" + Date.now(), { cache:"no-store" }).then(r => r.ok ? r.text() : "").then(t => { t = t.trim(); if(t && t !== window.__BUILD) banner(); }).catch(() => {});
+  };
+  if(navigator.serviceWorker.controller) navigator.serviceWorker.addEventListener("controllerchange", banner);
+  addEventListener("load", () => { navigator.serviceWorker.register("sw.js").then(r => { reg = r; check(); }).catch(() => {}); });
+  document.addEventListener("visibilitychange", () => { if(document.visibilityState === "visible") check(); });
+  addEventListener("pageshow", e => { if(e.persisted) check(); });
+}
 try{ if(navigator.storage && navigator.storage.persist) navigator.storage.persist(); }catch(e){}
 </script>
 </body>
