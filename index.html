@@ -203,6 +203,64 @@ html.gesture .node.pickable rect{animation:none}
 html.touch svg.map{will-change:transform}
 .touchonly{display:none}
 html.touch .touchonly{display:inline-flex}
+/* ═══ 아이패드 레이아웃 — 안 A: 지도 우선 + 서랍 (v3.143 · PD 결정 2026-10-12) ═══
+   조건 = html.tab (= html.touch 이면서 폭 ≤1400, JS 가 붙인다). 데스크톱(마우스)은 한 줄도 안 바뀐다.
+   지도가 가로 100% · 세로 약 750. 기록(왼쪽)·도시 상세(오른쪽)는 지도 위에 얹는 **서랍**이라 열고 닫아도 지도 크기가 안 변한다(재피팅 없음).
+   설정성 단추(세이브·자동 전쟁·테마·도움말·진단·메인메뉴)는 헤더의 ☰ 메뉴로 모았다. 월 달력은 숫자만 한 줄로 남긴다. */
+#bMenu,.hdl,#legbtn{display:none}
+html.tab #bMenu{display:block}
+html.tab .hdl{display:block}
+html.tab #legbtn{display:inline-flex;align-items:center}
+html.tab #bLog,html.tab #bTheme,html.tab #bHelp,html.tab .foot{display:none}
+html.tab header{height:48px;border-bottom-width:2px}
+html.tab .hcell{padding:2px 9px}
+html.tab .hcell .lb{font-size:11px;line-height:1.2;letter-spacing:0;white-space:nowrap}
+html.tab .hcell .vl{font-size:17px;line-height:1.2}
+html.tab .hcell.date{min-width:0}
+html.tab .hcell.date .vl{font-size:18.5px}
+html.tab .res .hcell,html.tab .res .hcell.num{min-width:0}
+html.tab #hFac{min-width:0}
+html.tab .res .ic{font-size:12px;margin-right:3px}
+html.tab .hbtn{min-width:48px;padding:0;font-size:22px}
+html.tab #btnTurn{padding:0 18px;font-size:18px;min-width:116px;border-left-width:2px;white-space:nowrap}
+@media(max-width:1060px){html.tab .hcell{padding:2px 6px}html.tab .hcell .vl{font-size:15.5px}html.tab .hcell.date .vl{font-size:16.5px}html.tab #btnTurn{padding:0 12px;min-width:96px;font-size:16px}html.tab .hbtn{min-width:44px}}
+html.tab .cal .cs{padding:1px 2px;border-top-width:2px;font-size:12px;line-height:1.25}
+html.tab .cal .cs .cn{display:none}
+html.tab .main{position:relative;display:block;overflow:hidden}
+html.tab #wrap{position:absolute;inset:0}
+html.tab #logbar,html.tab body.nolog #logbar{display:flex;position:absolute;left:0;top:0;bottom:0;width:min(340px,40vw);z-index:20;border-right:3px solid var(--line);
+  transform:translateX(-104%);transition:transform .22s ease;box-shadow:6px 0 18px rgba(0,0,0,.45)}
+html.tab #side{position:absolute;right:0;top:0;bottom:0;width:min(520px,56vw);z-index:20;
+  transform:translateX(104%);transition:transform .22s ease;box-shadow:-6px 0 18px rgba(0,0,0,.45);
+  touch-action:pan-y;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+html.tab #logbar{touch-action:pan-y;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+html.tab .main.dL #logbar{transform:none}
+html.tab .main.dR #side{transform:none}
+html.tab .hdl{position:absolute;z-index:19;top:50%;margin-top:-52px;width:44px;height:104px;border:2px solid var(--map-panel-line,var(--line));
+  background:var(--map-panel,var(--ink2));color:var(--tx);font-size:16px;line-height:1.15;padding:0;writing-mode:vertical-rl;letter-spacing:2px;
+  transition:left .22s ease,right .22s ease}
+html.tab .hdlL{left:0;border-left:0}
+html.tab .hdlR{right:0;border-right:0}
+html.tab .main.dL .hdlL{left:min(340px,40vw)}
+html.tab .main.dR .hdlR{right:min(520px,56vw)}
+html.tab .hdl .bd{display:inline-block;background:var(--vermilion);color:var(--onacc);font-size:13px;font-weight:800;padding:2px 3px;writing-mode:horizontal-tb;margin-bottom:4px}
+html.tab .mapbtn{left:10px;right:auto;top:10px;gap:6px}
+html.tab .mapbtn button{min-height:44px;min-width:56px;padding:0 14px;font-size:16px}
+html.tab .legend{display:none;left:10px;top:64px;z-index:5}
+html.tab .maphint{display:none;z-index:5;left:10px;bottom:10px;max-width:70%}
+html.tab .mapwrap.legopen .legend{display:flex}
+html.tab .mapwrap.legopen .maphint{display:block}
+html.tab #side button,html.tab #logbar button{min-height:44px}
+/* 메뉴 시트 */
+#pmenu{position:fixed;inset:0;z-index:70;background:rgba(8,6,4,.78);display:none;align-items:center;justify-content:center;padding:22px}
+#pmenu.on{display:flex}
+#pmenu .pm{width:min(440px,92vw);max-height:calc(100% - 20px);overflow-y:auto;-webkit-overflow-scrolling:touch;background:var(--paper);border:3px solid var(--line);padding:18px 20px}
+#pmenu h2{margin:0 0 12px;font-size:26px;letter-spacing:4px}
+#pmenu .pmb{display:block;width:100%;min-height:52px;margin:0 0 8px;background:var(--paperhi);border:2px solid var(--line);color:var(--tx);font-size:19px;text-align:left;padding:8px 14px}
+#pmenu .pmb i{font-style:normal;float:right;font-size:15px;color:var(--tx2)}
+#pmenu .pmb.danger{border-color:var(--vermilion);color:var(--vermilion)}
+#pmenu .pmv{margin-top:6px;font-size:13px;color:var(--tx3);text-align:center}
+#pmenu p{font-size:17px;line-height:1.75;margin:0 0 14px}
 /* ═══ 성능 진단 HUD (v3.142 · 실기 전용) — 층을 하나씩 끄고 켜서 어느 층이 버벅임인지 가린다 ═══ */
 #diag{position:fixed;right:8px;top:calc(8px + env(safe-area-inset-top));z-index:99998;background:rgba(10,8,6,.92);
   border:2px solid var(--gold);padding:8px 10px;font-size:14px;max-width:min(420px,60vw);display:none}
@@ -2006,6 +2064,7 @@ img.por,img.por-lg{object-fit:cover;object-position:50% 18%;image-rendering:auto
   <div class="hcell click" id="hFac" title="외교 — 세력별 관계와 사절"><span class="lb">세 력</span><span class="vl" id="hFacV">—</span></div>
   <div class="res" id="hRes"></div>
   <div class="hsp"></div>
+  <button class="hbtn" id="bMenu" title="메뉴 — 세이브 · 옵션 · 메인메뉴">☰</button>
   <button class="hbtn" id="bLog" title="기록·경보 패널 접기/펴기">▤</button>
   <button class="hbtn" id="bTheme" title="테마 전환">◐</button>
   <button class="hbtn" id="bHelp" title="도움말">?</button>
@@ -2142,6 +2201,7 @@ img.por,img.por-lg{object-fit:cover;object-position:50% 18%;image-rendering:auto
     <div class="mapbtn">
       <button id="bFitOwn">내 영토</button>
       <button id="bFitAll">전체</button>
+      <button id="legbtn" class="touchonly" title="범례·안내 보이기/감추기">범례</button>
     </div>
     <!-- 범례 — 노드 색이 무슨 뜻인지 화면에서 바로 읽혀야 한다. draw() 가 채운다 -->
     <div class="legend" id="legend"></div>
@@ -4631,7 +4691,7 @@ const TOUR = [
   + '<b>7월</b> — 개발도에 비례한 <b>가을 수확</b>. 군량은 여기서 한 해치를 법니다.<br>'
   + '나머지 달은 월수입(상업×치안)과 군량 소모, 그리고 <b>스탯 5% 감쇄</b>가 돕니다 — '
   + '사람을 안 붙이면 성은 저절로 내려갑니다.' },
-  { sel:"#wrap", n:"지도 — 천하", body:
+  { sel:"#wrap", tab:".mapbtn", n:"지도 — 천하", body:
     '<b>성을 누르면</b> 오른쪽이 그 성으로 바뀝니다.<br>'
   + '<b style="color:var(--jade)">◇ 무주공산</b> 임자 없는 땅 — 싸움 없이 먹을 수 있습니다.<br>'
   + '<b style="color:var(--gold)">★ 재야</b> 그 성에 벼슬 없는 인재가 있습니다.<br>'
@@ -4664,14 +4724,16 @@ const TOUR = [
     '시킬 것을 다 시켰으면 여기를 누릅니다.<br>'
   + '명령이 풀리고, 수입이 들어오고, <b>다른 세력이 움직입니다.</b> 그 결과가 왼쪽 기록에 쌓입니다.<br>'
   + '<span style="color:var(--tx3)">되돌릴 수 없습니다 — 넘기기 전에 왼쪽 경보를 한 번 훑으십시오.</span>' },
-  { sel:"#fSaveBtn", n:"세이브", body:
+  { sel:"#fSaveBtn", tab:"#bMenu", n:"세이브", body:
     '자동으로 저장됩니다만, 여기서 <b>따로 이름을 붙여</b> 여러 판을 남길 수 있습니다. '
   + '파일로 내보내고 다시 불러올 수도 있습니다.' },
-  { sel:"#bHelp", n:"도움말 — 막히면 여기", body:
+  { sel:"#bHelp", tab:"#bMenu", n:"도움말 — 막히면 여기", body:
     '한 달의 흐름, 전투 규칙, 그리고 <b>지금까지 받은 참모의 조언이 전부</b> 여기 다시 있습니다.<br>'
   + '<b>이 안내도 여기서 다시 볼 수 있습니다.</b><br>'
   + '<span style="color:var(--tx3)">조언이 번거로우면 여기서 끄고, 다시 켤 수도 있습니다.</span>' }
 ];
+/* 아이패드 레이아웃(html.tab)에서는 단추가 ☰ 메뉴로 모이고 지도가 화면 전체라 가리킬 자리가 다르다 — 단계에 `tab` 이 있으면 그것을 가리킨다 (v3.143) */
+const tourSel = st => (document.documentElement.classList.contains("tab") && st.tab) || st.sel;
 let tourAt = -1, tourScroll = null;
 const tourOn = () => tourAt >= 0;
 /* ⚠️ 안내가 화면을 옆으로 굴린다 (`scrollIntoView`). **끝나면 있던 자리로 돌려놓는다** —
@@ -4679,7 +4741,7 @@ const tourOn = () => tourAt >= 0;
 function tourStart(){ tourAt = -1; tipGate = false; tourScroll = [scrollX, scrollY]; tourNext(); }
 function tourNext(){
   tourAt++;
-  while(tourAt < TOUR.length && !$(TOUR[tourAt].sel)) tourAt++;   // 없는 자리는 건너뛴다
+  while(tourAt < TOUR.length && !$(tourSel(TOUR[tourAt]))) tourAt++;   // 없는 자리는 건너뛴다
   if(tourAt >= TOUR.length) return tourEnd();
   tourDraw();
 }
@@ -4691,7 +4753,7 @@ function tourEnd(){
 }
 function tourDraw(){
   if(!tourOn()) return;
-  const st = TOUR[tourAt], el = $(st.sel);
+  const st = TOUR[tourAt], el = $(tourSel(st));
   if(!el) return tourNext();
   const W = innerWidth, H = innerHeight;
   /* ⚠️ 화면이 아직 크기를 안 가진 순간에 그리면 **말풍선이 1픽셀 폭으로 접힌다** —
@@ -9458,6 +9520,7 @@ function onCityPick(cid){
   if(!S) return;
   if(!(S.cities[cid] || (S.fog && S.fog[cid]))) return;
   sel = cid; draw();
+  if(window.tabOpenSide) tabOpenSide(cid);   // 아이패드 레이아웃(html.tab) — 상세 서랍을 연다 (v3.143)
 }
 
 function buildMap(){
@@ -20085,6 +20148,99 @@ if(localStorage.getItem("sk3_proto_nolog")) document.body.classList.add("nolog")
   show();
 })();
 
+/* ═══ 아이패드 레이아웃 — 서랍 · 메뉴 (v3.143) ═══ 켜짐 조건: html.touch 이고 폭 ≤1400 → html.tab. 데스크톱은 이 코드가 아무것도 안 한다. */
+(() => {
+  const root = document.documentElement;
+  if(!root.classList.contains("touch")) return;
+  const main = document.querySelector(".main"), wrap = $("#wrap"), side = $("#side"), logbar = $("#logbar");
+  const isTab = () => root.classList.contains("tab");
+  const mk = (cls, html) => { const b = document.createElement("button"); b.className = "hdl " + cls; b.innerHTML = html; main.appendChild(b); return b; };
+  const hL = mk("hdlL", '<span class="bd" id="logBadge"></span><span class="tx">기록</span>'), hR = mk("hdlR", '<span class="tx">도시</span>');
+  const tL = hL.querySelector(".tx"), tR = hR.querySelector(".tx");
+  const setL = v => { main.classList.toggle("dL", v); if(v) main.classList.remove("dR"); tL.textContent = v ? "닫기" : "기록"; tR.textContent = main.classList.contains("dR") ? "닫기" : "도시"; };
+  /* 선택 도시가 서랍에 가리면 지도를 옆으로 민다 — 정식 applyCam (제스처 레이어는 그 안에서 걷힌다) */
+  const panTo = cid => {
+    const c = cid != null && CITIES.find(x => x.i === cid); if(!c || !mapBuilt) return;
+    const r = wrap.getBoundingClientRect(), dw = side.offsetWidth || Math.min(520, innerWidth * .56);
+    const sx = PX(c.x) * cam.k + cam.x, lim = r.width - dw - 70;
+    if(sx > lim){ cam.x -= (sx - lim); applyCam(); }
+  };
+  const setR = (v, cid) => { main.classList.toggle("dR", v); if(v){ main.classList.remove("dL"); tL.textContent = "기록"; panTo(cid != null ? cid : sel); } tR.textContent = v ? "닫기" : "도시"; };
+  hL.onclick = () => setL(!main.classList.contains("dL")); hR.onclick = () => setR(!main.classList.contains("dR"));
+  window.tabOpenSide = cid => { if(!isTab()) return; window.__tabPick = true; setR(true, cid); };
+  /* 빈 지도를 탭하면 서랍을 닫는다 (끌기였으면 무시 · 지목 중엔 닫지 않는다) */
+  let px = 0, py = 0, dragged = false;
+  wrap.addEventListener("pointerdown", e => { px = e.clientX; py = e.clientY; dragged = false; window.__tabPick = false; }, true);
+  wrap.addEventListener("pointermove", e => { if(Math.hypot(e.clientX-px, e.clientY-py) > 8) dragged = true; }, true);
+  /* 캡처 단계에서 받고 한 틱 뒤에 본다 — 도시 영역의 click 이 전파를 끊어도 놓치지 않고, onCityPick 이 먼저 `__tabPick` 을 세울 시간을 준다 */
+  wrap.addEventListener("click", ev => {
+    if(!isTab() || dragged) return;
+    const tg = ev.target;
+    setTimeout(() => {
+      if(window.__tabPick){ window.__tabPick = false; return; }
+      if(tg.closest && tg.closest(".mapbtn,.legend,.pickbar")) return;
+      if(typeof movePlanner !== "undefined" && movePlanner) return;
+      setL(false); setR(false);
+    }, 0);
+  }, true);
+  /* 서랍 가장자리 쪽으로 쓸면 닫는다 — 세로 스크롤(pan-y)은 브라우저가 가져가므로 가로가 우세할 때만 */
+  const swipe = (el, dir, close) => { let x0 = 0, y0 = 0, on = false;
+    el.addEventListener("pointerdown", e => { if(e.pointerType === "touch"){ x0 = e.clientX; y0 = e.clientY; on = true; } });
+    el.addEventListener("pointermove", e => { if(!on) return; const dx = (e.clientX - x0) * dir, dy = Math.abs(e.clientY - y0);
+      if(dx > 70 && dx > dy * 1.5){ on = false; close(); } });
+    for(const t of ["pointerup","pointercancel"]) el.addEventListener(t, () => { on = false; }); };
+  swipe(side, 1, () => setR(false)); swipe(logbar, -1, () => setL(false));
+  /* 기록 단추의 숫자 — "이번 달 N" */
+  const upd = () => { const m = /이번 달\s*(\d+)/.exec(logbar.textContent || ""), b = $("#logBadge"); if(b){ b.textContent = m ? m[1] : ""; b.style.display = m ? "" : "none"; } };
+  let t = 0; new MutationObserver(() => { clearTimeout(t); t = setTimeout(upd, 120); }).observe(logbar, { childList:true, subtree:true, characterData:true }); upd();
+  $("#legbtn").onclick = () => wrap.classList.toggle("legopen");
+  /* 태블릿 구간 판정 */
+  const mq = matchMedia("(max-width:1400px)");
+  const sync = () => { const on = mq.matches; if(root.classList.contains("tab") === on) return;
+    root.classList.toggle("tab", on);
+    if(!on){ main.classList.remove("dL", "dR"); wrap.classList.remove("legopen"); }
+    dispatchEvent(new Event("resize")); };
+  if(mq.addEventListener) mq.addEventListener("change", sync); else mq.addListener(sync);
+  sync();
+
+  /* ── ☰ 메뉴 — 세이브 · 자동 전쟁 · 테마 · 도움말 · 진단 · 메인메뉴. 각 단추는 **원래 단추를 그대로 누른다**(처리는 한 곳) ── */
+  const pm = document.createElement("div"); pm.id = "pmenu"; document.body.appendChild(pm);
+  const close = () => pm.classList.remove("on");
+  const btn = (id, label, extra, cls) => `<button class="pmb ${cls || ""}" id="${id}">${label}${extra ? `<i>${extra}</i>` : ""}</button>`;
+  const via = (sel) => { const e = $(sel); if(e) e.click(); };
+  const render = (view) => {
+    if(view === "exit"){
+      pm.querySelector(".pm") || (pm.innerHTML = '<div class="pm"></div>');
+      pm.querySelector(".pm").innerHTML = `<h2>메인메뉴로</h2>
+        <p>메인메뉴로 나갑니다. 지금까지의 진행은 <b>자동 저장</b>에 남지만, <b>이름 붙인 세이브로 남기지 않으면</b> 새 게임을 시작할 때 자동 저장이 덮입니다.</p>
+        ${btn("pmSaveFirst", "세이브 창 열기 (먼저 남기기)")}${btn("pmExitGo", "메인메뉴로 나가기", "", "danger")}${btn("pmBack", "취소")}`;
+      $("#pmSaveFirst").onclick = () => { close(); via("#fSaveBtn"); };
+      $("#pmExitGo").onclick = () => { close(); try { save(); } catch(e){} $("#mask").classList.add("off"); titleScreen("menu"); };
+      $("#pmBack").onclick = () => render("main");
+      return;
+    }
+    const aw = $("#autowar"), awOn = aw && !aw.classList.contains("off"), light = root.getAttribute("data-theme") === "light";
+    pm.innerHTML = `<div class="pm"><h2>메 뉴</h2>
+      ${btn("pmSave", "세이브", "저장 · 불러오기")}
+      ${awOn ? btn("pmAuto", "자동 전쟁", S && S.autoWar ? "켜짐" : "꺼짐") : ""}
+      ${btn("pmTheme", "테마", light ? "라이트 → 다크" : "다크 → 라이트")}
+      ${btn("pmHelp", "도움말")}
+      ${btn("pmDiag", "성능 진단")}
+      ${btn("pmExit", "메인메뉴로 나가기", "", "danger")}
+      ${btn("pmClose", "닫기")}
+      <div class="pmv">빌드 ${window.__BUILD || "dev"}</div></div>`;
+    $("#pmSave").onclick = () => { close(); via("#fSaveBtn"); };
+    if(awOn) $("#pmAuto").onclick = () => { via("#autowar"); render("main"); };
+    $("#pmTheme").onclick = () => { via("#bTheme"); render("main"); };
+    $("#pmHelp").onclick = () => { close(); via("#bHelp"); };
+    $("#pmDiag").onclick = () => { close(); via("#fDiag"); };
+    $("#pmExit").onclick = () => render("exit");
+    $("#pmClose").onclick = close;
+  };
+  pm.addEventListener("click", e => { if(e.target === pm) close(); });
+  $("#bMenu").onclick = () => { if(!S) return; render("main"); pm.classList.add("on"); };
+})();
+
 if(TEST_BATTLE) randomBattle(); else titleScreen();
 
 addEventListener("resize", () => {
@@ -20093,7 +20249,7 @@ addEventListener("resize", () => {
   fitTestBar();          // 시험 바가 줄바꿈되면 높이가 바뀐다 — 하단 조작부를 다시 비켜 준다
 });
 </script>
-<script>window.__BUILD="337e7464";</script>
+<script>window.__BUILD="2f561470";</script>
 <script>
 /* PWA — 서비스워커(오프라인 시작) · 저장소 영속 요청. build_web.mjs 가 붙인다.
    v3.142 — 갱신 확인: 시작 · 포그라운드 복귀 때 registration.update() 와 version.txt(캐시 우회) 를 본다.
