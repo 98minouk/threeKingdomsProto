@@ -281,6 +281,9 @@ html.lay-off-label #gNode text{display:none}
 html.lay-off-sym #gNode,html.lay-off-sym #gPick,html.lay-off-sym #gCityHint{display:none}
 html.lay-off-edge #gGeo,html.lay-off-edge #gEdge{display:none}
 html.lay-off-allfx #svg *{filter:none!important;mask:none!important}
+/* 비트맵 캐시(v3.151, mapBake) — 경계 띠는 자식이 전부 숨어 있어 그릴 것이 없는데 필터 층만 남는다. 구운 모드에서는 걷는다 */
+html.bake #gBorder{filter:none}
+#fogBake{pointer-events:none}
 .ttbub{position:fixed;z-index:99999;max-width:320px;padding:8px 12px;background:var(--paperhi);color:var(--tx);
   border:2px solid var(--gold);font-size:15px;line-height:1.45;white-space:pre-line;pointer-events:none;
   box-shadow:3px 3px 0 rgba(0,0,0,.5)}
@@ -9372,7 +9375,7 @@ function paintTerrPx(){
   }
   cx.globalAlpha = 1;
 
-  im.setAttribute("href", _terrCv.toDataURL());
+  if(!mapBakeTerr(_terrCv, PXW, PXH, im)) im.setAttribute("href", _terrCv.toDataURL());   // 비트맵 캐시가 켜져 있으면 mLand 를 미리 곱해 구운 것 (v3.151)
   im.setAttribute("x", rx0); im.setAttribute("y", ry0);
   im.setAttribute("width", rx1 - rx0); im.setAttribute("height", ry1 - ry0);
 }
@@ -9484,7 +9487,221 @@ function buildCloudTile(size){
     d[i+3] = 255;
   }
   ctx.putImageData(img, 0, 0);
+  window._cloudCv = cv;      // 비트맵 캐시(mapBake)가 안개를 구울 때 픽셀을 그대로 쓴다 (v3.151)
   return cv.toDataURL("image/png");
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   비트맵 캐시 — 정적 지도 층을 한 번 구워 <image> 로 둔다 (v3.151 · 아이패드 Safari 버벅임)
+   ═══════════════════════════════════════════════════════════════════
+   PD 실기(v3.142 진단 HUD): 안개 · 구름 결 · 경계 블러 · 부조 필터 · 등고 음영 · 영토 면을 하나씩 꺼도 다 빨라졌다 —
+   Safari 가 feGaussianBlur σ36 안개 · 부조/음영 필터 · 마스크(mFog · mLand)를 합성할 때마다 재래스터한다. 제스처 레이어(v3.141)만으로는 모자랐다.
+   처방: 그 필터·마스크가 하는 일은 전부 **픽셀 단위 연산 + 가우시안 하나**라서 원본 해상도에서 한 번 계산해 PNG 로 두면 된다.
+     · 부조(relief-px 384×288) — fRelief(색 행렬 + discrete 단계)를 픽셀 루프로. 필터 정의는 DOM 에서 읽는다(applyReliefTint 가 채운 값이 SSOT).
+     · 등고 음영(relief.png 1536×1152) — fShadeDk · fShadeLt 둘을 한 장으로 합쳐서(볕이 그늘 위).
+     · 영토(terrPx 768×576) — mLand 마스크를 destination-in 으로 미리 곱해 둔다. paintTerrPx 가 부를 때마다.
+     · 안개 — 지도 상자 ÷4 해상도(약 805×703) 한 장. mFog 의 가우시안(σ36→σ9px)은 3중 박스 블러 · 구름(_cloudCv) · 두 막(.46/.34)을 한 번에 합성.
+       (캔버스 ctx.filter 는 Safari 미지원 — 직접 구현. 선형RGB 블러를 흉내 내려고 알파 A 와 휘도합 Cp 두 장을 따로 흘린다.)
+   줌 사다리와 무관하다(원본 해상도 · 이미지는 SVG 안에서 확대) → 줌 단계별 캐시·창 크기 재굽기가 필요 없다. 무효화는 테마(build)·안개/영토 변화(paint)·칩 뿐이다.
+   켜짐: html.bake — 터치에서 기본 켜짐(주소 ?bake=0 으로 끔), PC 는 ?bake=1 로만. 진단 HUD 의 칩 '비트맵 캐시' 를 끄면 SVG 필터 경로로 돌아간다.
+   데스크톱(bake 없음)에서는 이 코드가 DOM 을 한 글자도 건드리지 않는다.
+   ⚠️ 원본 이미지를 캔버스로 읽으므로 file:// 에서는 오염돼 실패한다 → try/catch 로 BAKE.ok=false 가 되고 SVG 경로로 남는다(http/dist 에서만 켜진다).
+   ⚠️ 이미지 로드는 onload 로 (img.decode() 는 브라우저 패널에서 멈춘다). 로드 전에는 SVG 경로가 그대로 보이다가 구운 뒤 교체한다. */
+const BAKE = { ok:null, src:null, loadP:null, dirty:{ relief:1, shade:1, fog:1 }, cache:new Map(), sig:"", stat:{}, applied:false, no:0 };
+const _bakeRoot = document.documentElement;
+const bakeWanted = () => _bakeRoot.classList.contains("bake") && !window.__bakeOff && BAKE.ok !== false;
+const _bakeOffL = k => _bakeRoot.classList.contains("lay-off-" + k);
+function _bakeHref(e, u){ e.setAttributeNS("http://www.w3.org/1999/xlink", "href", u); e.setAttribute("href", u); }
+function bakeLoadSources(){
+  if(BAKE.loadP) return BAKE.loadP;
+  const ld = u => new Promise(res => { const im = new Image(); im.onload = () => res(im); im.onerror = () => res(null); im.src = u; });
+  BAKE.loadP = Promise.all([ld(ASSETS["map.relief"]), ld(ASSETS["map.shade"])]).then(([px, shade]) => {
+    if(!px || !shade) BAKE.ok = false; else BAKE.src = { px, shade };
+  });
+  return BAKE.loadP;
+}
+/* 무효화 단일 문. reason: build(지도를 새로 지음 · 테마) · paint(paintMap — 안개가 바뀌었을 때만 다시 굽는다) · chip(진단 칩·플래그) */
+function mapBakeInvalidate(reason){
+  if(reason === "build" || reason === "chip"){ BAKE.dirty.relief = BAKE.dirty.shade = BAKE.dirty.fog = 1; BAKE.sig = ""; }
+  else if(reason === "paint"){ const s = _bakeFogSig(); if(s !== BAKE.sig) BAKE.dirty.fog = 1; }
+  mapBakeRun(reason);
+}
+function _bakeFogSig(){
+  let s = (document.documentElement.getAttribute("data-theme") || "dark") + (_bakeOffL("cloud") ? "c" : "") + (_bakeOffL("fog") ? "f" : "") + "|";
+  for(const id in TERR.cells) s += fogOf(id)[0];
+  return s;
+}
+function mapBakeRun(reason){
+  if(!mapBuilt && reason !== "build") return;
+  if(!bakeWanted()){ if(BAKE.applied) bakeRestore(); return; }
+  if(!BAKE.src){ bakeLoadSources().then(() => { if(BAKE.src) mapBakeRun("src"); else if(BAKE.applied) bakeRestore(); }); return; }
+  try{
+    const d = BAKE.dirty, st = BAKE.stat, t0 = performance.now();
+    if(d.relief){ bakeRelief(); d.relief = 0; }
+    if(d.shade){ bakeShade(); d.shade = 0; }
+    if(d.fog){ if(!_bakeOffL("fog")) bakeFog(); BAKE.sig = _bakeFogSig(); d.fog = 0; }
+    const firstTime = !BAKE.applied; BAKE.applied = true;
+    if(firstTime || reason === "build" || reason === "chip" || reason === "src") paintTerrPx();   // 영토도 같이 구워 교체한다
+    st.last = +(performance.now() - t0).toFixed(1);
+  }catch(e){
+    BAKE.ok = false; console.warn("[mapBake] 굽기 실패 — SVG 경로로 되돌립니다:", e && e.message); bakeRestore();
+  }
+}
+/* 필터 정의를 DOM 에서 읽어 같은 계산을 픽셀 루프로 한다 — 값이 바뀌어도(테마) 읽는 쪽이 따라온다 */
+const _bakeNums = s => (s || "").trim().split(/[\s,]+/).filter(Boolean).map(Number);
+const _bakeDisc = (tbl, v) => { const n = tbl.length; v = v < 0 ? 0 : v > 1 ? 1 : v; let k = (v * n) | 0; return tbl[k >= n ? n - 1 : k]; };
+function _bakeCv(w, h){ const c = document.createElement("canvas"); c.width = w; c.height = h; return c; }
+function _bakeKey(){
+  return ["#fReliefTint", "#fShadeDkM", "#fShadeDkA", "#fShadeLtM", "#fShadeLtA", "#fRs", "#fGs", "#fBs"]
+    .map(s => { const e = $(s); return e ? (e.getAttribute("values") || e.getAttribute("tableValues")) : ""; }).join("|");
+}
+function bakeRelief(){
+  const t0 = performance.now(), key = "R" + _bakeKey();
+  let hit = BAKE.cache.get(key);
+  if(!hit){
+    const im = BAKE.src.px, W = im.naturalWidth, H = im.naturalHeight, cv = _bakeCv(W, H), cx = cv.getContext("2d");
+    cx.drawImage(im, 0, 0);
+    const id = cx.getImageData(0, 0, W, H), d = id.data;
+    const m = _bakeNums($("#fReliefTint").getAttribute("values")), T = ["#fRs", "#fGs", "#fBs"].map(s => _bakeNums($(s).getAttribute("tableValues")));
+    for(let i = 0; i < d.length; i += 4){
+      const R = d[i] / 255, G = d[i+1] / 255, B = d[i+2] / 255, A = d[i+3] / 255;
+      for(let c = 0; c < 3; c++){
+        const o = c * 5; d[i+c] = Math.round(_bakeDisc(T[c], m[o] * R + m[o+1] * G + m[o+2] * B + m[o+3] * A + m[o+4]) * 255);
+      }
+      /* 알파 행(0 0 0 1 0)은 항등 — 부조 알파를 그대로 둔다 */
+    }
+    cx.putImageData(id, 0, 0); hit = { relief:cv.toDataURL(), px:W * H };
+    BAKE.cache.set(key, hit); while(BAKE.cache.size > 4) BAKE.cache.delete(BAKE.cache.keys().next().value);
+  }
+  const r = $("#gLandFill image.relief"); if(r){ _bakeHref(r, hit.relief); r.removeAttribute("filter"); }
+  BAKE.stat.relief = { ms:+(performance.now() - t0).toFixed(1), px:hit.px, mb:+(hit.px * 4 / 1048576).toFixed(2) };
+}
+function bakeShade(){
+  const t0 = performance.now(), key = "S" + _bakeKey();
+  let hit = BAKE.cache.get(key);
+  if(!hit){
+    const im = BAKE.src.shade, W = im.naturalWidth, H = im.naturalHeight, cv = _bakeCv(W, H), cx = cv.getContext("2d");
+    cx.drawImage(im, 0, 0);
+    const id = cx.getImageData(0, 0, W, H), d = id.data, o = new Uint8ClampedArray(d.length);
+    const P = ["Dk", "Lt"].map(n => ({ m:_bakeNums($("#fShade" + n + "M").getAttribute("values")), t:_bakeNums($("#fShade" + n + "A").getAttribute("tableValues")) }));
+    const [D, L] = P, dm = D.m, lm = L.m;
+    for(let i = 0; i < d.length; i += 4){
+      const R = d[i] / 255, G = d[i+1] / 255, B = d[i+2] / 255, A = d[i+3] / 255;
+      /* 그늘: α = 표(k·(mid−g)) · 원본 알파 / 볕은 그 위에 source-over */
+      const ad = _bakeDisc(D.t, dm[15] * R + dm[16] * G + dm[17] * B + dm[18] * A + dm[19]) * A;
+      const al = _bakeDisc(L.t, lm[15] * R + lm[16] * G + lm[17] * B + lm[18] * A + lm[19]) * A;
+      const ao = al + ad * (1 - al); if(ao <= 0) continue;
+      const wd = ad * (1 - al);
+      o[i]   = (lm[4]  * al + dm[4]  * wd) / ao * 255;
+      o[i+1] = (lm[9]  * al + dm[9]  * wd) / ao * 255;
+      o[i+2] = (lm[14] * al + dm[14] * wd) / ao * 255;
+      o[i+3] = ao * 255;
+    }
+    id.data.set(o); cx.putImageData(id, 0, 0); hit = { shade:cv.toDataURL(), px:W * H };
+    BAKE.cache.set(key, hit); while(BAKE.cache.size > 4) BAKE.cache.delete(BAKE.cache.keys().next().value);
+  }
+  const dk = $("#gShade image.dk"), lt = $("#gShade image.lt");
+  if(dk){ _bakeHref(dk, hit.shade); dk.removeAttribute("filter"); }
+  if(lt){ lt.style.display = "none"; lt.removeAttribute("filter"); }
+  BAKE.stat.shade = { ms:+(performance.now() - t0).toFixed(1), px:hit.px, mb:+(hit.px * 4 / 1048576).toFixed(2) };
+}
+/* 상자 블러 한 번(가로+세로, 가장자리 밖은 0) */
+function _bakeBox(a, w, h, r){
+  const t = new Float32Array(a.length), inv = 1 / (2 * r + 1);
+  for(let y = 0; y < h; y++){
+    const row = y * w; let s = 0; for(let x = 0; x <= r && x < w; x++) s += a[row + x];
+    for(let x = 0; x < w; x++){ t[row + x] = s * inv; const xa = x + r + 1, xs = x - r; if(xa < w) s += a[row + xa]; if(xs >= 0) s -= a[row + xs]; }
+  }
+  for(let x = 0; x < w; x++){
+    let s = 0; for(let y = 0; y <= r && y < h; y++) s += t[y * w + x];
+    for(let y = 0; y < h; y++){ a[y * w + x] = s * inv; const ya = y + r + 1, ys = y - r; if(ya < h) s += t[ya * w + x]; if(ys >= 0) s -= t[ys * w + x]; }
+  }
+}
+const _lin2s = v => v <= 0.0031308 ? v * 12.92 : 1.055 * Math.pow(v, 1 / 2.4) - 0.055;
+function bakeFog(){
+  const t0 = performance.now(), BX = MAPBOX, Q = 4;
+  const W = Math.ceil(BX.w / Q), H = Math.ceil(BX.h / Q), N = W * H;
+  /* ① 걷힘 도형 — R 에 선형 휘도(안개 있음 255 · 기억 #3d3d3d→12 · 걷힘 0), 알파에 덮임 */
+  const cv = _bakeCv(W, H), cx = cv.getContext("2d");
+  cx.setTransform(1 / Q, 0, 0, 1 / Q, -BX.x / Q, -BX.y / Q);
+  for(const p of $("#gReveal").querySelectorAll("path")){
+    const fg = fogOf(p.dataset.id), v = fg === "unknown" ? 255 : fg === "remembered" ? 12 : 0;
+    cx.fillStyle = `rgb(${v},0,0)`; cx.fill(new Path2D(p.getAttribute("d")));
+  }
+  const px = cx.getImageData(0, 0, W, H).data, A = new Float32Array(N), C = new Float32Array(N);
+  for(let i = 0; i < N; i++){ const a = px[i*4+3] / 255; A[i] = a; C[i] = a * px[i*4] / 255; }
+  /* ② σ36 유저단위 = σ9px → 가우시안 근사 3중 상자(폭 17) */
+  const r = Math.round((36 / Q) * 3 * Math.sqrt(2 * Math.PI) / 4 / 2 - 0.25);
+  for(let k = 0; k < 3; k++){ _bakeBox(A, W, H, r); _bakeBox(C, W, H, r); }
+  /* ③ 구름 · 두 막 합성 */
+  const fc = (() => { const c = _bakeCv(1, 1).getContext("2d"); c.fillStyle = canvasColor("var(--fog)"); c.fillRect(0, 0, 1, 1); return c.getImageData(0, 0, 1, 1).data; })();
+  const useCloud = !_bakeOffL("cloud") && window._cloudCv;
+  let cl = null;
+  if(useCloud){ const c2 = _bakeCv(W, H).getContext("2d"); c2.imageSmoothingQuality = "high"; c2.drawImage(window._cloudCv, 0, 0, W, H); cl = c2.getImageData(0, 0, W, H).data; }
+  const out = cx.createImageData(W, H), o = out.data;
+  const f1 = 0.46 * fc[3] / 255, f2 = 0.34;
+  for(let i = 0; i < N; i++){
+    const a = A[i];
+    const cs = a > 1e-6 ? _lin2s(Math.min(1, C[i] / a)) : 0;
+    const m = (1 - a) + a * cs;                       // 마스크 값(안개 있음 = 1)
+    const a1 = f1 * m, a2 = cl ? f2 * m : 0, ao = a2 + a1 * (1 - a2);
+    if(ao <= 0) continue;
+    const w1 = a1 * (1 - a2);
+    for(let c = 0; c < 3; c++) o[i*4+c] = ((cl ? cl[i*4+c] * a2 : 0) + fc[c] * w1) / ao;
+    o[i*4+3] = ao * 255;
+  }
+  cx.setTransform(1, 0, 0, 1, 0, 0); cx.putImageData(out, 0, 0);
+  const url = cv.toDataURL();
+  const g = $("#gFog"); let im = $("#fogBake");
+  if(!im){ im = el("image", { id:"fogBake", preserveAspectRatio:"none", style:"pointer-events:none" }); g.appendChild(im); }
+  im.setAttribute("x", BX.x); im.setAttribute("y", BX.y); im.setAttribute("width", W * Q); im.setAttribute("height", H * Q); _bakeHref(im, url);
+  im.style.display = "";
+  g.querySelectorAll("rect.fog").forEach(rc => { rc.style.display = "none"; });
+  BAKE.nFog = (BAKE.nFog || 0) + 1;
+  BAKE.stat.fog = { ms:+(performance.now() - t0).toFixed(1), px:N, mb:+(N * 4 / 1048576).toFixed(2), w:W, h:H };
+}
+/* 영토 면 — paintTerrPx 가 그린 캔버스에 mLand(부조 알파)를 미리 곱한다. 구우면 true */
+function mapBakeTerr(src, W, H, im){
+  if(!bakeWanted() || !BAKE.src || _bakeOffL("terr")) return false;
+  try{
+    const t0 = performance.now();
+    const cv = BAKE.cvTerr || (BAKE.cvTerr = _bakeCv(W, H)); if(cv.width !== W || cv.height !== H){ cv.width = W; cv.height = H; }
+    const cx = cv.getContext("2d");
+    cx.globalCompositeOperation = "copy"; cx.drawImage(src, 0, 0);
+    cx.globalCompositeOperation = "destination-in"; cx.imageSmoothingEnabled = false; cx.drawImage(BAKE.src.px, 0, 0, W, H);
+    cx.globalCompositeOperation = "source-over"; cx.imageSmoothingEnabled = true;
+    _bakeHref(im, cv.toDataURL()); im.removeAttribute("mask");
+    BAKE.stat.terr = { ms:+(performance.now() - t0).toFixed(1), px:W * H, mb:+(W * H * 4 / 1048576).toFixed(2) };
+    return true;
+  }catch(e){ BAKE.ok = false; console.warn("[mapBake] 영토 굽기 실패:", e && e.message); bakeRestore(); return false; }
+}
+/* SVG 필터 경로로 되돌린다 (칩 끄기 · 플래그 끄기 · 굽기 실패) */
+function bakeRestore(){
+  BAKE.applied = false;
+  const r = $("#gLandFill image.relief"); if(r){ _bakeHref(r, ASSETS["map.relief"]); r.setAttribute("filter", "url(#fRelief)"); }
+  [["dk", "fShadeDk"], ["lt", "fShadeLt"]].forEach(([c, f]) => { const e = $("#gShade image." + c); if(e){ _bakeHref(e, ASSETS["map.shade"]); e.setAttribute("filter", `url(#${f})`); e.style.display = ""; } });
+  const t = $("#terrPx"); if(t) t.setAttribute("mask", "url(#mLand)");
+  $("#gFog").querySelectorAll("rect.fog").forEach(rc => { rc.style.display = ""; });
+  const f = $("#fogBake"); if(f) f.remove();
+  BAKE.dirty.relief = BAKE.dirty.shade = BAKE.dirty.fog = 1; BAKE.sig = "";
+  try{ if(S && mapBuilt) paintTerrPx(); }catch(e){}
+}
+/* 켜짐 스위치 — PC 에서 비교해 볼 때 (콘솔: mapBakeSet(true)) */
+function mapBakeSet(on){ _bakeRoot.classList.toggle("bake", !!on); mapBakeInvalidate("chip"); return mapBakeReady(); }
+function mapBakeReady(){ return BAKE.loadP ? BAKE.loadP.then(() => {}) : Promise.resolve(); }
+/* 측정 — 지금 실제로 그려지는 필터·마스크 요소 수(= 제스처 중 매 프레임 재래스터될 후보) · 구운 비트맵 크기 · 굽는 시간 */
+function mapBakeStats(){
+  let n = 0; const list = [];
+  for(const e of document.querySelectorAll("#svg *")){
+    if(e.closest("defs")) continue;
+    const cs = getComputedStyle(e);
+    const f = cs.filter && cs.filter !== "none", mk = (cs.mask && cs.mask !== "none") || (cs.maskImage && cs.maskImage !== "none");
+    if(!f && !mk) continue;
+    let hid = false; for(let p = e; p && p.id !== "svg"; p = p.parentNode){ if(getComputedStyle(p).display === "none"){ hid = true; break; } }
+    if(!hid){ n++; list.push((e.id ? "#" + e.id : e.tagName) + (e.getAttribute("class") ? "." + e.getAttribute("class") : "")); }
+  }
+  const mb = Object.values(BAKE.stat).reduce((s, v) => s + (v && v.mb || 0), 0);
+  return { filtered:n, list, applied:BAKE.applied, ok:BAKE.ok, mb:+mb.toFixed(2), stat:BAKE.stat };
 }
 
 /* ═══ 카메라 한계 — 지도가 항상 화면을 덮게 한다 ═══
@@ -9770,6 +9987,7 @@ function buildMap(){
   });
   { const mh = document.querySelector(".maphint .mhport"); if(mh) mh.innerHTML = typeIcon("navy"); }   // 범례의 항구 표식 (N4) — 지도와 같은 그림
   mapBuilt = true;
+  BAKE.applied = false; mapBakeInvalidate("build");   // 레이어 DOM 을 새로 지었다 — 비트맵 캐시를 다시 꽂는다 (v3.151)
 }
 
 /* ═══ 노드 분류 배지 — v3.20 에서 제거 ═══
@@ -9793,6 +10011,7 @@ function paintMap(){
      미탐색 가리개는 위의 안개 층(#gFog + mFog)이 통째로 맡는다. */
 
   paintTerrPx();   // 세력 영역 — 픽셀 격자에 굽는다 (v3.47)
+  mapBakeInvalidate("paint");   // 비트맵 캐시 — 안개 상태가 바뀌었을 때만 다시 굽는다 (v3.151)
 
   /* ── 세력 경계 띠 — v3.9 에서 껐다 ──
      v3.8 은 경계 변을 굵게 그어 직선을 녹였지만, 그러느라 **가장자리에 색을 얹어**
@@ -20135,6 +20354,7 @@ function drawTestBar(roll){
 }
 
 document.documentElement.setAttribute("data-theme", localStorage.getItem("sk3_proto_theme") || "dark");
+if(/[?&]bake=1/.test(location.search)) document.documentElement.classList.add("bake");   // PC 에서 비트맵 캐시를 켜 보는 길 (v3.151) — 기본은 꺼짐
 if(localStorage.getItem("sk3_proto_nolog")) document.body.classList.add("nolog");
 /* ═══ 터치 대응 (아이패드 · v3.139) ═══
    html.touch 를 붙이는 조건: 주 포인터가 손가락(pointer:coarse)이거나 터치점이 있거나 주소에 ?touch=1.
@@ -20145,6 +20365,7 @@ if(localStorage.getItem("sk3_proto_nolog")) document.body.classList.add("nolog")
   const touch = matchMedia("(pointer:coarse)").matches || navigator.maxTouchPoints > 0 || /[?&]touch=1/.test(location.search);
   if(!touch) return;
   document.documentElement.classList.add("touch");
+  if(!/[?&]bake=0/.test(location.search)) document.documentElement.classList.add("bake");   // 비트맵 캐시 — 터치 기본 켜짐 (v3.151 · 진단 HUD 칩으로 끈다)
   for(const ev of ["gesturestart","gesturechange","gestureend"]) document.addEventListener(ev, e => e.preventDefault());
   let timer = null, bub = null, shown = false, sx = 0, sy = 0, hideT = null;
   const hide = () => { clearTimeout(hideT); if(bub){ bub.remove(); bub = null; } };
@@ -20179,7 +20400,7 @@ if(localStorage.getItem("sk3_proto_nolog")) document.body.classList.add("nolog")
 (() => {
   if(!document.documentElement.classList.contains("touch")) return;
   const LAYERS = [["fog","안개"],["cloud","구름 결"],["border","경계 블러"],["relief","부조 필터"],["shade","등고 음영"],["terr","영토 면"],
-    ["label","이름표"],["sym","도시 기호"],["edge","길·수계 선"],["allfx","필터·마스크 전부"],["gest","제스처 레이어"]];
+    ["label","이름표"],["sym","도시 기호"],["edge","길·수계 선"],["allfx","필터·마스크 전부"],["gest","제스처 레이어"],["bake","비트맵 캐시"]];
   const KEY = "sk3_diag", root = document.documentElement;
   let st = { on:false, off:[] };
   try { const j = JSON.parse(localStorage.getItem(KEY) || "null"); if(j && Array.isArray(j.off)) st = { on:!!j.on, off:j.off.filter(k => LAYERS.some(l => l[0] === k)) }; } catch(e){}
@@ -20189,6 +20410,8 @@ if(localStorage.getItem("sk3_proto_nolog")) document.body.classList.add("nolog")
     for(const [k] of LAYERS) if(k !== "gest") root.classList.toggle("lay-off-" + k, st.off.includes(k));
     window.__noLbl = st.off.includes("label");
     window.__noGestLayer = st.off.includes("gest");           // 끄면 제스처 중에도 옛 방식(매 move 정식 렌더)
+    window.__bakeOff = st.off.includes("bake");               // 끄면 정적 층을 굽지 않고 SVG 필터 경로로 돌아간다 (v3.151)
+    try { mapBakeInvalidate("chip"); } catch(e){}
     try { if(S && mapBuilt) applyCam(); } catch(e){}
   };
   const bt = window.__BUILD || "dev";
@@ -20335,7 +20558,7 @@ addEventListener("resize", () => {
   fitTestBar();          // 시험 바가 줄바꿈되면 높이가 바뀐다 — 하단 조작부를 다시 비켜 준다
 });
 </script>
-<script>window.__BUILD="ac49798a";</script>
+<script>window.__BUILD="b3da1569";</script>
 <script>
 /* PWA — 서비스워커(오프라인 시작) · 저장소 영속 요청. build_web.mjs 가 붙인다.
    v3.142 — 갱신 확인: 시작 · 포그라운드 복귀 때 registration.update() 와 version.txt(캐시 우회) 를 본다.
