@@ -1726,6 +1726,7 @@ html.touch .footbtn.touchonly{display:inline-flex}
 #tbar button{font:inherit;font-size:13px;font-weight:800;background:var(--paper);color:var(--tx);
   border:2px solid var(--line2);padding:3px 12px;cursor:pointer}
 #tbar button:hover{border-color:var(--gold)}
+html.touch #tbar button{min-height:44px;padding:3px 16px}   /* 터치 44px (v3.152 전투 검증) */
 /* 병종 선택 버튼 — 고른 것은 금니 테두리. 적성 등급을 오른쪽에 작게 붙인다 */
 .tybtn{font:inherit;font-size:14px;background:var(--paper);color:var(--tx);
   border:2px solid var(--line2);padding:2px 8px;margin-right:5px;cursor:pointer}
@@ -8871,7 +8872,10 @@ function gameOver(msg){
      ② **수동 슬롯** — `SLOT_IX` 목록 + `SLOT_KEY(id)` 본문. 사람이 이름을 붙여 남긴다
    🔥 **자동 저장을 슬롯으로 바꾸지 않았다.** 그러면 옛 세이브가 통째로 안 보이게 되고,
       "뭔가 한 직후엔 이미 저장돼 있다"는 지금의 안전망도 사라진다. 자동은 그대로 두고 위에 얹는다. */
-function save(){ localStorage.setItem(KEY, JSON.stringify(S)); $("#fSave").textContent = "저장됨"; }
+/* 🔒 전투 검증(타이틀 메뉴 · v3.152) 중에는 **실제 세이브를 덮지 않는다.** 전투 끝(`finishBattle`)·턴 끝 등
+   68곳이 `save()` 를 부르므로 호출처마다 막지 않고 **이 문 하나**에서 막는다. `?battle` 직접 진입은 옛 동작 그대로(VERIFY=false). */
+let VERIFY = false;
+function save(){ if(VERIFY) return; localStorage.setItem(KEY, JSON.stringify(S)); $("#fSave").textContent = "저장됨"; }
 function loadSave(){ try{ const s = localStorage.getItem(KEY); return s ? JSON.parse(s) : null; }catch(e){ return null; } }
 
 const SLOT_IX = "sk3_proto_slots";
@@ -19888,6 +19892,7 @@ function titleScreen(step){
       <button data-m="load" ${(autoSave || slotList().length) ? "" : "disabled"}>이어하기${
         autoSave ? `<span class="tsub">자동 저장 ${autoSave.year}년 ${autoSave.month}월 · 세이브 ${slotList().length}개</span>`
              : `<span class="tsub">세이브 ${slotList().length}개</span>`}</button>
+      <button data-m="verify">전투 검증<span class="tsub">무작위 전쟁 · 병종 도트·이펙트 확인용 (세이브 안 건드림)</span></button>
       <button data-m="cfg" disabled>설 정<span class="tsub">준비 중</span></button>
       <button data-m="quit">게임 종료</button>
     </div>`;
@@ -20002,6 +20007,7 @@ function titleScreen(step){
     if(m === "load") return titleScreen("saves");
     if(m === "import") return importSaveFile();
     if(m === "quit") return quitGame();
+    if(m === "verify") return startVerify();
   });
   /* 세이브 고르기 — `__auto` 는 자동 저장, 나머지는 슬롯 id */
   T.querySelectorAll("button[data-load]").forEach(b => b.onclick = () => {
@@ -20230,6 +20236,31 @@ $("#bHelp").onclick = () => {
    ⚠️ **별도 파일로 빼지 말 것.** 전투 로직을 복제하면 본체와 갈라진다 (§5).
       여기서는 `newGame`/`startBattle` 을 **그대로** 부르고 조건만 굴린다. */
 const TEST_BATTLE = new URLSearchParams(location.search).has("battle");
+/* ═══ 전투 검증 (타이틀 메뉴 · v3.152) ═══
+   PD: 아이패드 홈 화면 앱(PWA)은 URL 쿼리를 못 붙여서 `?battle` 을 못 쓴다 — 같은 시험을 **메뉴 항목**으로 연다.
+   `VERIFY`(save() 위)가 켜져 있는 동안 `save()` 는 아무것도 안 쓴다 → 이어하기 슬롯 불변. 나가면 끈다.
+   병종은 초점을 보병→궁병→기병→수군 순으로 돌려 새 도트가 골고루 나오게 한다(`randomBattle` 안 VERIFY 가지). */
+const VFOCUS = { k: -1, t: "infantry", tries: 0 };
+function verifyNext(){
+  VFOCUS.k = (VFOCUS.k + 1) % 4; VFOCUS.t = ["infantry","archer","cavalry","navy"][VFOCUS.k]; VFOCUS.tries = 0;
+  return randomBattle();
+}
+function startVerify(){
+  VERIFY = true; VFOCUS.k = -1; tipGate = false;
+  $("#title").classList.add("off"); $("#mask").classList.add("off"); pending = null; popupQueue = [];
+  verifyNext();
+}
+function exitVerify(){
+  VERIFY = false; tipGate = true; advQueue = []; advBusy = false;
+  const adv = $("#advtop"); adv.classList.add("off"); adv.innerHTML = "";
+  const bar = $("#tbar"); if(bar) bar.remove();
+  const p = $("#battle"); if(p){ p.classList.add("off"); p.style.bottom = ""; }
+  BAT = null; battleQueue = []; turnDelta = null; pending = null; popupQueue = [];
+  try { clearFX(); } catch(e){}
+  $("#mask").classList.add("off");
+  S = null;                                  // 가짜 판을 버린다 — ☰ 메뉴는 S 가 없으면 안 열린다
+  titleScreen("menu");
+}
 
 function rnd(a){ return a[Math.floor(Math.random()*a.length)]; }
 function randomBattle(){
@@ -20241,14 +20272,28 @@ function randomBattle(){
   const fid = rnd(fids);
   newGame(fid);
   $("#mask").classList.add("off"); pending = null; popupQueue = [];
-  roll.시나리오 = SCEN.y + "년"; roll.세력 = ownerName(fid);
+  /* 참모의 조언 팝업이 전투 화면을 통째로 덮는다(`#advtop` 전면) — 검증에선 줄을 비워 안 뜨게 한다. 문(`tipGate`)은 `startVerify` 가 닫아 둔다 */
+  if(VERIFY){ advQueue = []; advBusy = false; const a = $("#advtop"); a.classList.add("off"); a.innerHTML = ""; }
+  roll.시나리오 =SCEN.y + "년"; roll.세력 = ownerName(fid);
 
   /* 2) 목표 — 내 성에 인접한 남의 땅. 없으면 다시 굴린다 */
   const mine = Object.keys(S.cities);
   const pairs = [];
   for(const c of mine) for(const o of (cityById(c).d || [])) if(!S.cities[o]) pairs.push([c, o]);
   if(!pairs.length) return randomBattle();
-  const [from, to] = rnd(pairs);
+  /* 전투 검증(v3.152): 병종 초점을 보병→궁병→기병→수군 순으로 **돌려** 새 도트가 골고루 나오게 한다.
+     수군 차례는 출발이 항구인 쌍이 필요하고, 그중 **목표가 항구 밖인 쌍**(`navy_foot` 도보 도트)을 먼저 본다.
+     없으면 세력·시나리오를 다시 굴린다(30번까지 — 그래도 없으면 수군 차례는 건너뛴다). */
+  let [from, to] = rnd(pairs);
+  if(VERIFY){
+    if(VFOCUS.t === "navy"){
+      const np = pairs.filter(([a, b]) => isPort(a) && !isPort(b)), pp = pairs.filter(([a]) => isPort(a));
+      const pick = np.length ? np : (VFOCUS.tries > 30 ? pp : []);
+      if(pick.length) [from, to] = rnd(pick);
+      else if(++VFOCUS.tries <= 60) return randomBattle();
+      else VFOCUS.t = "infantry";
+    }
+  }
   roll.출발 = cityById(from).n; roll.목표 = cityById(to).n;
 
   /* 3) 부대 — 장수를 출발지에 모으고 2~MAX 명을 뽑는다. 병종도 굴린다 */
@@ -20259,6 +20304,12 @@ function randomBattle(){
   for(const g of all)
     S.generals[g].unitType = Math.random() < 0.7
       ? rnd(["infantry","cavalry","archer"]) : null;   // 30% 는 적성 자동
+  if(VERIFY){
+    /* 첫 부대는 이번 차례의 초점 병종, 나머지는 네 병종을 섞는다(수군은 출발이 항구일 때만 — `unitTypeOf` 문). 데이터 변형 없음 — `S.generals` 의 선택값뿐 */
+    const pool = ["infantry","cavalry","archer"].concat(isPort(from) ? ["navy"] : []);
+    for(const g of all) S.generals[g].unitType = rnd(pool);
+    S.generals[gids[0]].unitType = (VFOCUS.t === "navy" && !isPort(from)) ? "infantry" : VFOCUS.t;
+  }
 
   /* 4) 지형·성벽·병력비를 굴린다 — 이게 시험의 핵심 변수다 */
   const terr = rnd(["plain","forest","mountain","river","capital","pass"]);
@@ -20298,8 +20349,22 @@ function randomBattle(){
       renderBattle();
     }
   }
+  if(BAT && VERIFY){
+    /* 수비측도 병종을 섞는다 — 그대로 두면 `bestType` 이 적성 최고(대개 보병)만 내서 궁·기병 도트가 수비쪽에서 안 나온다.
+       `setUnitType` 이 병종 파생값(적성·이동력)의 단일 문이다. 수군은 항구 전장에서만. 계획·힌트는 다시 세운다 */
+    const dpool = ["infantry","cavalry","archer"].concat(BAT.port ? ["navy"] : []);
+    BAT.def.units.forEach((u, i) => {
+      const g = (u.gid && GENERALS.find(x => x.i === u.gid)) || GENERALS.find(x => x.name === u.name);
+      setUnitType(u, dpool[(i + Math.floor(Math.random()*dpool.length)) % dpool.length], g ? g.ap : MILITIA.ap);
+    });
+    beginPlan(); renderBattle();
+    const tally = us => { const c = {}; us.forEach(u => c[u.type] = (c[u.type] || 0) + 1);
+      return Object.keys(UTYPE).filter(k => c[k]).map(k => UTYPE[k].n + c[k]).join(" "); };
+    roll.전장 = BAT.port ? "항구" : "육지";
+    roll.병종 = `공 ${tally(BAT.atk.units)} · 수 ${tally(BAT.def.units)}`;
+  }
   if(BAT){
-    roll.실제 = `${nf(totalTroops("atk"))} vs ${nf(totalTroops("def"))}`;
+    roll.실제 =`${nf(totalTroops("atk"))} vs ${nf(totalTroops("def"))}`;
     roll.적부대 = BAT.def.units.length + "기";
     if(BAT.wall) roll.성문 = nf(BAT.gateHp);
   }
@@ -20329,8 +20394,10 @@ function drawTestBar(roll){
     ${Object.entries(roll).map(([k,v]) => `<span><i>${k}</i>${v}</span>`).join("")}
     <button id="tbNew">새 전투</button>
     <button id="tbAuto">자동 진행</button>
-    <button id="tbFx">연출 ${FX_ON ? "켬" : "끔"}</button>`;
-  $("#tbNew").onclick = () => randomBattle();
+    <button id="tbFx">연출 ${FX_ON ? "켬" : "끔"}</button>
+    ${VERIFY ? `<button id="tbTitle">타이틀로</button>` : ""}`;
+  $("#tbNew").onclick = () => VERIFY ? verifyNext() : randomBattle();
+  if(VERIFY) $("#tbTitle").onclick = exitVerify;
   /* 연출 토글 (v3.28) — 켜고/끄고 같은 전투를 봐야 "연출이 상태를 안 건드린다"가 눈으로도 확인된다 */
   $("#tbFx").onclick = () => { toggleFX(); $("#tbFx").textContent = `연출 ${FX_ON ? "켬" : "끔"}`; };
   fitTestBar();
@@ -20529,7 +20596,9 @@ if(localStorage.getItem("sk3_proto_nolog")) document.body.classList.add("nolog")
     $("#pmTheme").onclick = () => { via("#bTheme"); render("main"); };
     $("#pmHelp").onclick = () => { close(); via("#bHelp"); };
     if($("#pmDiag")) $("#pmDiag").onclick = () => { close(); via("#fDiag"); };
-    $("#pmExit").onclick = () => render("exit");
+    /* 전투 검증 중에는 저장할 판이 없다 — 확인창 없이 타이틀로, 세이브 단추는 뺀다 */
+    if(VERIFY){ $("#pmSave").remove(); $("#pmExit").onclick = () => { close(); exitVerify(); }; }
+    else $("#pmExit").onclick = () => render("exit");
     $("#pmClose").onclick = close;
   };
   pm.addEventListener("click", e => { if(e.target === pm) close(); });
@@ -20558,7 +20627,7 @@ addEventListener("resize", () => {
   fitTestBar();          // 시험 바가 줄바꿈되면 높이가 바뀐다 — 하단 조작부를 다시 비켜 준다
 });
 </script>
-<script>window.__BUILD="b3da1569";</script>
+<script>window.__BUILD="06203dac";</script>
 <script>
 /* PWA — 서비스워커(오프라인 시작) · 저장소 영속 요청. build_web.mjs 가 붙인다.
    v3.142 — 갱신 확인: 시작 · 포그라운드 복귀 때 registration.update() 와 version.txt(캐시 우회) 를 본다.
