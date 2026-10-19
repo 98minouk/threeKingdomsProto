@@ -681,6 +681,61 @@ body.nolog .logbar{display:none}
 .alert:hover{background:var(--paper)}
 .alert .ac{font-size:14.5px;font-weight:800;color:var(--gold)}
 .alert .at{font-size:14.5px;color:var(--tx2);line-height:1.5;margin-top:2px}
+/* 경보판 (v3.153 · F1) — 등급 칩 S 주홍 · A 금 · B 회 · ★ 옥. 색만으로 읽히지 않게 글자(S/A/B/★)를 같이 박는다 */
+.gchip{display:inline-block;min-width:20px;padding:0 5px;margin-right:6px;border-radius:4px;font-style:normal;font-weight:800;font-size:12.5px;line-height:19px;text-align:center;border:1.5px solid currentColor;vertical-align:1px}
+.gchip.gS{color:var(--onacc);background:var(--vermilion);border-color:var(--vermilion)}
+.gchip.gA{color:var(--gold)}
+.gchip.gB{color:var(--tx3)}
+.gchip.go{color:var(--jade)}
+.agr{padding:7px 18px 8px;font-size:13.5px;color:var(--tx3);border-bottom:1px solid var(--line3)}
+.agr .gS{color:var(--vermilion);font-weight:800}.agr .gA{color:var(--gold);font-weight:700}.agr .go{color:var(--jade);font-weight:700}
+.agr .agv{margin-top:2px;color:var(--tx3)}
+.anow{border-bottom:2px solid var(--line)}
+.ahd{padding:7px 18px 2px;font-size:12.5px;font-weight:800;letter-spacing:.08em;color:var(--tx3)}
+.acard{display:flex;align-items:center;gap:6px;min-height:48px;padding:7px 18px;border-bottom:1px solid var(--line3);cursor:pointer;border-left:4px solid var(--gold)}
+.acard.gS{border-left-color:var(--vermilion);background:color-mix(in srgb, var(--vermilion) 9%, transparent)}
+.acard.gB{border-left-color:var(--line2)}
+.acard.go{border-left-color:var(--jade)}
+.acard:hover{background:var(--paper)}
+.acard .ab{flex:1;min-width:0;display:flex;flex-direction:column}
+.acard .ab b{font-size:15px;font-weight:800;color:var(--gold)}
+.acard.gS .ab b{color:var(--vermilion)}
+.acard.go .ab b{color:var(--jade)}
+.acard .ab span{font-size:14px;color:var(--tx2);line-height:1.4}
+.acard em,.agh em{font-style:normal;font-size:12.5px;font-weight:700;color:var(--tx3)}
+.areco{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;min-height:44px;padding:8px 18px;text-align:left;background:color-mix(in srgb, var(--gold) 14%, var(--ink2));color:var(--gold);border:0;border-bottom:1px solid var(--line3);border-left:4px solid var(--gold);font:inherit;font-size:15px;font-weight:800;cursor:pointer}
+.areco span{font-size:12.5px;font-weight:600;color:var(--tx3)}
+.areco:hover{background:var(--paper)}
+.arnote{padding:7px 18px;font-size:13.5px;line-height:1.45;color:var(--jade);border-bottom:1px solid var(--line3)}
+/* 추천 배치 표 (v3.154 · F2) — 성 한 줄 × 상업·개발·치안 세 칸. 칸마다 [체크 · 임무] + 장수 선택 + 적성 한 줄. 길면 창 안에서 스크롤, 아래 단추줄은 붙박이 */
+.rcgrid{margin-top:6px}
+.rch,.rcr{display:grid;grid-template-columns:92px repeat(3,minmax(0,1fr));gap:8px;align-items:start}
+.rch{font-size:12px;color:var(--tx3);letter-spacing:.06em;padding:0 0 6px;border-bottom:2px solid var(--line)}
+.rcr{padding:8px 0;border-bottom:1px solid var(--line3)}
+.rcn{font-weight:800;font-size:15px;color:var(--tx);padding-top:10px}
+.rcn i{display:block;font-style:normal;font-size:11px;font-weight:700;color:var(--gold)}
+.rcc{display:flex;flex-direction:column;gap:3px;min-width:0}
+.rcc.off select,.rcc.off .rce{opacity:.55}
+.rcc.none em,.rcc.skip em{font-size:12.5px;color:var(--tx3);font-style:normal}
+.rcd{display:flex;align-items:center;gap:6px;min-height:22px;font-size:12.5px;font-weight:700;color:var(--tx2)}
+.rcd input{width:20px;height:20px;accent-color:var(--gold);margin:0}
+.rcc select{min-height:44px;width:100%;font:inherit;font-size:14.5px;font-weight:700;background:var(--ink2);color:var(--tx);border:1.5px solid var(--line2);padding:0 6px}
+.rce{font-size:12.5px;color:var(--tx3);line-height:1.35}
+.rce em{font-style:normal}
+.rcg{font-style:normal;font-weight:800;color:var(--jade)}
+.rcmore{display:block;width:100%;min-height:44px;margin-top:8px;background:var(--ink2);color:var(--tx2);border:1.5px solid var(--line2);font:inherit;font-size:14px;font-weight:700;cursor:pointer}
+.rcnote{margin-top:12px;font-size:13px;line-height:1.5;color:var(--tx3)}
+.rcfoot{position:sticky;bottom:-28px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:12px -32px -28px;padding:12px 32px;background:var(--ink);border-top:2px solid var(--line)}
+.rcsum{flex:1;min-width:140px;font-size:14px;color:var(--tx2)}.rcsum b{color:var(--gold)}
+.rcfoot button{min-height:44px;padding:0 16px;font:inherit;font-size:15px;font-weight:800;cursor:pointer;background:var(--gold);color:var(--onacc);border:0}
+.rcfoot button.no{background:var(--ink2);color:var(--tx2);border:1.5px solid var(--line2)}
+.rcfoot button:disabled{opacity:.4;cursor:default}
+.amore{display:block;width:100%;min-height:44px;padding:8px 18px;text-align:left;background:var(--ink2);color:var(--tx2);border:0;border-bottom:1px solid var(--line3);font:inherit;font-size:14px;font-weight:700;cursor:pointer}
+.amore:hover{background:var(--paper)}
+.agh{display:flex;align-items:center;padding:7px 18px 0;font-size:14px}
+.agh b{color:var(--gold);font-weight:800;margin-right:6px}
+.agrp .alert{padding:3px 18px 5px 44px;border-bottom:0}
+.agrp{border-bottom:1px solid var(--line3);padding-bottom:3px}
 .diag{font-size:15.5px;line-height:1.55;margin-top:7px}
 .diag.warn{color:var(--vermilion)}
 .diag.info{color:var(--tx2)}
@@ -4241,6 +4296,7 @@ function newGame(fid, scen){
   if(scen) SCEN = scen;
   const y0 = SCEN.y;
   pending = null; BAT = null; battleQueue = []; turnDelta = null;   // 이전 판의 잔여 상태를 끊는다
+  recoPending = false; RECO = null; recoNote = null; _recoC = null;   // 추천 배치 — 지난 판의 제안을 새 판이 물려받지 않게
   afterEvent = null;        // 지난 판의 월말 확인을 새 판이 물려받지 않게 (v3.120-19)
   /* 🔥 **떠 있는 층도 끊는다** (v3.75). `#mask` 만 닫고 있었는데 확인창(`#ask`)·보물 목록
      (`#tpick`)은 별도 층이라 남는다 — 새 판을 열었는데 **지난 판의 확인창이 화면을 덮는다.**
@@ -4636,7 +4692,7 @@ function advPush(card){ advQueue.push(card); pumpAdv(); }
 function pumpAdv(){
   if(advBusy) return;
   const i = advQueue.findIndex(c => c.ask || tipGate);
-  if(i < 0) return;
+  if(i < 0){ recoMaybeOffer(); return; }
   const c = advQueue.splice(i, 1)[0];
   advBusy = true;
   const el = $("#advtop");
@@ -6043,6 +6099,21 @@ function assignDelegated(){
       '고장났다'로 읽힌다.
    ⚠️ 이동·출진·탐색·등용·장수탐색·사절은 **건드리지 않는다** — 태수 위임과 같은 선이다.
       맡겨 놓고도 원정과 인사는 직접 지시할 수 있어야 한다. */
+/* 🔥 **배정 점수 — 한 문 (v3.154 · F2).** 참모 임무위임(`assignByAdvisor`)과 추천 배치(`recoPlan`)가 같은 식을 쓴다.
+   성의 부족한 항목일수록 값이 크고(`need`), 이미 채운 몫이 클수록 내려간다(`room`).
+   🔥 **0 으로 떨어뜨리면 안 된다 (v3.55).** `max(0, 1 − filled/100)` 을 쓰니
+      네 지표가 다 포화된 순간 모든 후보가 정확히 0 이 되어 **변별이 사라지고**
+      그 뒤로는 늘 같은 곳에 몰렸다 (실측: 개발 166 인데 축성 0).
+      `1/(1+filled/100)` 은 단조 감소하되 0 이 안 되므로, 포화 뒤에도
+      **제일 덜 찬 곳**이 계속 이긴다. (filled 0 → 1.0 · 100 → 0.5 · 200 → 0.33) */
+function placeScore(g, d, st, filled){
+  const D = DUTIES[d];
+  const need = D.stat ? (1 - st[D.stat] / 100) : 0.5;   // 징병은 성 지표가 없다
+  const room = D.stat ? 1 / (1 + filled[d] / 100) : 1;
+  return dutyWeight(g, D) * need * room;
+}
+/* 강한 자부터 고르게 하는 순서 — 내정 넷 중 제일 잘하는 값 */
+const placeTop = g => Math.max(...["commerce","develop","security","fortify"].map(d => dutyWeight(g, DUTIES[d])));
 /* 참모가 손대지 않는 임무 — 군주가 직접 지시한 원정·인사·모략.
    ⚠️ **훈련도 여기 있다 (v3.65).** 병력을 누구에게 맡기고 언제 기를지는 군주의 결정이다 —
       징병을 뺀 것과 같은 선이다 (돈·병력을 쓰는 판단은 위임의 범위가 아니다).
@@ -6091,9 +6162,7 @@ function assignByAdvisor(){
     const ranked = pool.slice().sort((a, b) => {
       const ga = genById(a[0]), gb = genById(b[0]);
       if(!ga || !gb) return 0;
-      const top = g => Math.max(...["commerce","develop","security","fortify"]
-        .map(d => dutyWeight(g, DUTIES[d])));
-      return top(gb) - top(ga);
+      return placeTop(gb) - placeTop(ga);
     });
     /* 🔥 **휴식을 엇갈리게 한다 (v3.55).** 참모가 모두를 같은 셈으로 배정하니 피로가
        **한꺼번에** 오르고, 문턱을 다 같이 넘어 **그 달 생산이 통째로 0** 이 됐다
@@ -6142,18 +6211,8 @@ function assignByAdvisor(){
         .filter(d => d !== avoid && !dutyLocked(d));
       if(!opts.length) opts = [gs.troops ? "train" : "search"].filter(d => d !== avoid);
       if(!opts.length){ gs.duty = "rest"; continue; }
-      const scored = opts.map(d => {
-        const D = DUTIES[d];
-        const need = D.stat ? (1 - st[D.stat] / 100) : 0.5;   // 징병은 성 지표가 없다
-        /* 남은 자리 — 이미 채운 가중치가 클수록 값이 내려간다.
-           🔥 **0 으로 떨어뜨리면 안 된다 (v3.55).** `max(0, 1 − filled/100)` 을 쓰니
-              네 지표가 다 포화된 순간 모든 후보가 정확히 0 이 되어 **변별이 사라지고**
-              그 뒤로는 늘 같은 곳에 몰렸다 (실측: 개발 166 인데 축성 0).
-              `1/(1+filled/100)` 은 단조 감소하되 0 이 안 되므로, 포화 뒤에도
-              **제일 덜 찬 곳**이 계속 이긴다. (filled 0 → 1.0 · 100 → 0.5 · 200 → 0.33) */
-        const room = D.stat ? 1 / (1 + filled[d] / 100) : 1;
-        return { d, s: dutyWeight(g, D) * need * room };
-      });
+      const scored = opts.map(d => ({ d, s: placeScore(g, d, st, filled) }));
+      /* 점수 식은 `placeScore` 한 문이다 — 추천 배치(`recoPlan`)도 같은 문을 지난다. */
       /* ═══ 참모의 눈 ═══ (v3.64)
          🔥 **참모의 판단은 흔들리지 않는다.** 전에는 `Math.random()` 으로 갈라서
             **위임을 껐다 켤 때마다 같은 상태인데 다른 임무**가 나왔다 — 그러면 도구가 아니라
@@ -10067,13 +10126,7 @@ function paintMap(){
     const tier = knownTier(id);
     if(!own && f && f.snap){
       /* ★ = 이름까지 아는 재야 / ☆ = 이름난 인재가 있다는 **소문**만 (고급은 장수탐색의 몫) */
-      const rogue = tier >= 3 && f.snap.generals.some(x => {
-        if(x.faction) return false;
-        const rg = genById(x.id);
-        return rg && foundRogue(rg);
-      });
-      const rumor = !rogue && rumoredTalent(id);
-      const vacant = tier >= 2 && f.snap.vacant;
+      const { rogue, rumor, vacant } = mapMarkOf(id, f, tier);   // 🔥 좌측 ★ 기회 카드(`alertBoard`)와 한 문
       mk.textContent = rogue ? "★" : rumor ? "☆" : vacant ? "◇" : tier < 2 ? "?" : "";
       mk.setAttribute("fill", rogue ? "var(--gold)" : rumor ? "var(--violet)"
         : vacant ? "var(--jade)" : "var(--tx3)");
@@ -10407,24 +10460,53 @@ function draw(delta){
 
   /* 좌측 = 서사 칼럼. 위는 **다가올 일**(경보), 아래는 **지나간 일**(기록).
      경보가 없으면 머리글만 남기고 접힌다 — 문제가 있을 때만 자리를 차지한다. */
-  const alerts = allAlerts();
   $("#logbar").innerHTML =
-    (alerts.length
-      ? `<div class="sechd warn">⚠ 이번 달 <span style="float:right">${alerts.length}</span></div>
-         <div class="alerts">${alerts.map(a => `
-           <div class="alert" data-cid="${a.cid}" data-stat="${a.stat||""}">
-             <div class="ac">${cityById(a.cid).n}</div>
-             <div class="at">${a.text}</div></div>`).join("")}</div>`
-      : `<div class="sechd ok">경보 없음</div>`)
+    alertBoardHtml(alertBoard())
     + `<div class="sechd">기 록</div>` + S.log.slice(0,80).map(l => l.m
         ? `<div class="logrow mon">${l.t}</div>`
         : `<div class="logrow ${l.k||""}"><span class="tx">${l.t}</span></div>`).join("");
-  $("#logbar").querySelectorAll(".alert").forEach(e =>
+  $("#logbar").querySelectorAll(".alert, .acard").forEach(e =>
     e.onclick = () => gotoAlert(e.dataset.cid, e.dataset.stat || null));
+  const rb = $("#logbar").querySelector(".areco");
+  if(rb) rb.onclick = () => openReco(false);
+  const am = $("#logbar").querySelector(".amore");
+  if(am) am.onclick = () => { setAlertOpen(!alertOpen); draw(); };
   $("#fBal").textContent = `balance v${B.BAL_VER} · 도시 ${CITIES.length} · 장수 DB ${GENERALS.length}`;
   $("#btnTurn").disabled = !!pending;
 }
 
+/* 좌측 경보판 HTML — 머리글("이번 달 N" 은 ☰ 배지가 정규식으로 읽는다 — 첫 숫자를 바꾸지 말 것) ·
+   등급별 건수 한 줄 · 지금 할 것 3칸(+★ 1칸) · 나머지 접힘 */
+function alertBoardHtml(bd){
+  const chip = g => `<i class="gchip g${g === "★" ? "o" : g}" title="${GRADE_KO[g]}">${g}</i>`;
+  const cname = cid => cityById(cid).n;
+  if(!bd.total && !bd.opp) return `<div class="sechd ok">경보 없음</div>`;
+  const head = bd.total
+    ? `<div class="sechd warn">⚠ 이번 달 <span style="float:right">${bd.total}</span></div>`
+    : `<div class="sechd ok">경보 없음</div>`;
+  const cnt = bd.total ? `<div class="agr">
+      <span class="${bd.count.S ? "gS" : "gB"}">막아야 함 S ${bd.count.S}</span> · <span class="${bd.count.A ? "gA" : "gB"}">권장 A ${bd.count.A}</span> · <span class="gB">참고 B ${bd.count.B}</span>${bd.opp ? ` · <span class="go">★ 1</span>` : ""}
+      ${bd.vacant ? `<div class="agv">담당 없음 ${bd.vacant.n}건 = ${bd.vacant.cities}성 · ${bd.vacant.kinds}종</div>` : ""}</div>` : "";
+  const card = g => `<div class="acard g${g.grade}" data-cid="${g.cid}" data-stat="${g.stat || ""}">
+      ${chip(g.grade)}<div class="ab"><b>${cname(g.cid)}</b><span>${g.text}</span></div>${g.items.length > 1 ? `<em>${g.items.length}</em>` : ""}</div>`;
+  const oppCard = bd.opp ? `<div class="acard go" data-cid="${bd.opp.cid}" data-stat="">
+      ${chip("★")}<div class="ab"><b>${cname(bd.opp.cid)}</b><span>${bd.opp.mark} ${bd.opp.text}</span></div></div>` : "";
+  const more = bd.rest.length ? `<button class="amore" aria-expanded="${alertOpen}">${alertOpen
+      ? "접기 ▴" : `+${bd.restN}건 더 보기 (${bd.rest.length}성) ▾`}</button>` : "";
+  const restHtml = (bd.rest.length && alertOpen) ? `<div class="alerts">${bd.rest.map(g => `
+      <div class="agrp"><div class="agh">${chip(g.grade)}<b>${cname(g.cid)}</b><em>${g.items.length}건</em></div>
+      ${g.items.map(a => `<div class="alert" data-cid="${a.cid}" data-stat="${a.stat || ""}">
+          <div class="at">${chip(a.grade)}${a.text}</div></div>`).join("")}</div>`).join("")}</div>` : "";
+  return head + cnt + (bd.total ? recoBtnHtml(bd) + `<div class="anow"><div class="ahd">지금 할 것</div>${bd.cards.map(card).join("")}${oppCard}</div>` : oppCard) + more + restHtml;
+}
+
+/* 경보판 위의 `추천 배치` 단추 — 담당 없음 경보가 있고 앉힐 수 있는 칸이 있을 때만. 달마다 자동으로 열지 않는다 (사람이 눌렀을 때만) */
+function recoBtnHtml(bd){
+  const note = recoNote && recoNote.turn === S.turn ? `<div class="arnote">${recoNote.text}</div>` : "";
+  if(!bd.vacant) return note;
+  const p = recoPlan();
+  return note + (p.n ? `<button class="areco" aria-label="추천 배치 열기">추천 배치 · ${p.n}칸 <span>알맞은 장수를 한 번에 제안</span></button>` : "");
+}
 /* 스탯마다 한자 하나 — 워터마크로 쓴다. 삼국지 기표를 작은 회색 글자로 흘리지 않는다 */
 const STAT_HANZI = { com:"商", dev:"開", sec:"治", loy:"民", def:"城", troops:"兵" };
 
@@ -10862,6 +10944,18 @@ function threatWatch(){
   }
 }
 
+/* 지도 마커(★ 재야 · ☆ 소문 · ◇ 무주공산)의 판정 — 노드와 경보판의 ★ 기회 칸이 **같은 문**을 지난다 (v3.153).
+   `rogues` 는 이름까지 아는 재야 장수(★ 일 때만 채운다). */
+function mapMarkOf(id, f, tier){
+  const rogues = (tier >= 3 && f && f.snap) ? f.snap.generals.filter(x => {
+    if(x.faction) return false;
+    const rg = genById(x.id);
+    return rg && foundRogue(rg);
+  }) : [];
+  const rogue = rogues.length > 0;
+  return { rogue, rogues, rumor: !rogue && rumoredTalent(id), vacant: !!(tier >= 2 && f && f.snap && f.snap.vacant) };
+}
+
 function cityAlerts(cid){
   const st = S.cities[cid], c = cityById(cid);
   if(!st) return [];
@@ -10869,14 +10963,17 @@ function cityAlerts(cid){
   /* `kind` = **무슨 종류의 경보인가** (v3.55). 한 `stat` 에 뜻이 여럿이라(sec = 담당공백 ·
      민심천장) 참모가 이걸 제 말투로 옮기려면 구분이 필요하다. 안 주면 stat 을 그대로 쓴다.
      ⚠️ 좌측 경보 목록은 `sev/stat/text` 만 읽는다 — 필드를 더해도 그쪽은 안 바뀐다. */
-  const push = (sev, stat, text, kind) => out.push({ cid, sev, stat, text, kind: kind || stat });
+  const push = (sev, stat, text, kind, v) => out.push({ cid, sev, stat, text, kind: kind || stat, v });   // v = 등급 매길 때만 읽는 수치 (vacant=월 감쇄 · riotrisk=확률) — 판정에는 안 쓴다
 
   /* 담당자 공백 — 이 게임의 기본 압력(매달 5% 감쇄)이 그대로 손실이 된다 */
   for(const k of ["com","dev","sec"]){
     const on = here.some(([,g]) => g.duty === DUTY_OF_STAT[k]);
-    if(!on){
+    /* 🐛 **잠긴 임무는 경보가 아니다** (v3.153 · F0 가 잡았다 — 184 황건 15/16 · 190 황건 6/6 · 225 남만 6/11).
+       경보는 사람에게 "이걸 해라" 라는 신호인데 황건(상업·개발·치안)·남만(상업·개발)은 그 임무를 **줄 수 없다**.
+       본문 "감쇄만 진행" 도 거짓이었다 — `decayNext` 는 잠긴 임무의 감쇄를 건너뛴다. 규칙·수치는 불변, 표시 판정만. */
+    if(!on && !dutyLocked(DUTY_OF_STAT[k])){
       const dec = Math.max(B.DECAY_MIN, Math.floor(st[k] * B.DECAY_RATE));
-      push(st[k] > 20 ? "warn" : "info", k, `${STAT_KO[k]} 담당 없음 — 매달 −${dec} 감쇄만 진행`, "vacant");
+      push(st[k] > 20 ? "warn" : "info", k, `${STAT_KO[k]} 담당 없음 — 매달 −${dec} 감쇄만 진행`, "vacant", dec);
     }
   }
   /* 치안이 민심 천장을 누르고 있는가 */
@@ -10918,7 +11015,7 @@ function cityAlerts(cid){
      민란을 셈하지 않으므로, 그 사실을 여기서 못 박아 예측이 거짓말이 되지 않게 한다. */
   else if(riot >= 1) push("warn", "loy",
     `이번 달 민란 확정 — 수입 0 · 병력 −${B.RIOT_TROOP_LOSS*100}% · 상업/개발 −${B.RIOT_STAT_LOSS} (아래 예측은 이를 셈하지 않는다)`);
-  else if(riot > 0.04) push("warn", "loy", `민란 위험 ${(riot*100).toFixed(0)}% — 민심 ${st.loy} · 치안 ${st.sec}`, "riotrisk");
+  else if(riot > 0.04) push("warn", "loy", `민란 위험 ${(riot*100).toFixed(0)}% — 민심 ${st.loy} · 치안 ${st.sec}`, "riotrisk", riot);
   /* 병력 과잉 — 민심을 갉는다 */
   const tcap = troopCap(st);
   if(st.troops > tcap)
@@ -10941,6 +11038,221 @@ function allAlerts(){
   const out = [];
   for(const cid of Object.keys(S.cities)) out.push(...cityAlerts(cid).filter(a => a.sev === "warn"));
   return (alertsCache = out);
+}
+
+/* ═══ 경보판 — 등급 · "지금 할 것 3개" · 성 단위 접힘 (v3.153 · F1 · 19 §2.2) ═══
+   🔥 **표시 전용이다.** 판정(`cityAlerts`)은 한 건도 안 바꾸고(잠긴 임무를 거른 한 건만 예외 — 위) 여기서 등급·순서·묶음만 붙인다.
+      규칙 · 수치 · 세이브는 안 건드린다 (`S` 에 아무것도 안 쓴다 — 접힘 상태만 localStorage).
+   S 막아야 함(잃는 일) · A 권장(손을 쓰면 나아진다) · B 참고(작은 성의 담당 공백) · ★ 기회(경보가 아니다 — 지도 마커와 같은 판정).
+   F0 실측: 시작 경보의 98.7% 가 '담당 없음'이라 S 는 거의 안 나온다 — A·B 를 가르는 것은 `vacant` 의 **월 손실 · 수도 · 접경**이다. */
+const ALERT_GRADE_S_KINDS = ["starve", "payshort", "riot", "food", "overpop", "loy"];   // "loy" = 민란 확정(kind 를 안 준 줄)
+const ALERT_RISK_S = 0.15;        // 민란 위험이 이 이상이면 S (표시 문턱 — 초안, QA 가 잰다)
+const ALERT_VACANT_A_DEC = 2;     // 월 감쇄가 이만큼 이상이면 A (= 수치 40↑ — 작은 성 B)
+const ALERT_CARDS = 3;            // "지금 할 것" 칸 수
+const ALERT_KIND_KO = { loycap:"민심 천장", starve:"아사 임박", food:"수확 전 군량 부족", payshort:"녹봉 부족",
+  gold:"녹봉 예고", riot:"민란 진행", riotrisk:"민란 위험", overpop:"병력 과잉", loy:"민란 확정" };
+const GRADE_KO = { S:"막아야 함", A:"권장", B:"참고", "★":"기회" };
+const GRADE_RANK = { S:0, A:1, B:2 };
+let alertOpen = (() => { try{ return localStorage.getItem("tk_alert_open") === "1"; }catch(e){ return false; } })();
+function setAlertOpen(v){ alertOpen = !!v; try{ localStorage.setItem("tk_alert_open", v ? "1" : "0"); }catch(e){} }
+
+function alertBoard(){
+  const raw = allAlerts();
+  const isBorder = cid => (cityById(cid).d || []).some(o => !S.cities[o]);
+  const maxDec = raw.reduce((m, a) => a.kind === "vacant" ? Math.max(m, a.v || 0) : m, 1);
+  const list = raw.map(a => {
+    const cap = a.cid === S.capital, bd = isBorder(a.cid);
+    let grade;
+    if(ALERT_GRADE_S_KINDS.includes(a.kind)) grade = "S";
+    else if(a.kind === "riotrisk") grade = (a.v || 0) >= ALERT_RISK_S ? "S" : "A";
+    else if(a.kind === "vacant") grade = (cap || bd || (a.v || 0) >= ALERT_VACANT_A_DEC) ? "A" : "B";
+    else if(a.kind === "loycap" || a.kind === "gold") grade = "A";
+    else grade = "B";
+    const score = (ADVICE_W[a.stat] || 50) * (cap ? 1.2 : 1) * (bd ? 1.1 : 1)
+      * (a.kind === "vacant" ? 0.5 + 0.5 * (a.v || 0) / maxDec : 1);
+    return { ...a, grade, score };
+  });
+  /* 성 단위로 묶는다 — 한 성의 상업·개발·치안 3줄이 한 줄(`진류 — 상업·개발·치안 담당 없음`)이 된다 */
+  const by = new Map();
+  for(const a of list){
+    let g = by.get(a.cid); if(!g) by.set(a.cid, g = { cid:a.cid, items:[], grade:"B", score:0 });
+    g.items.push(a);
+    if(GRADE_RANK[a.grade] < GRADE_RANK[g.grade]) g.grade = a.grade;
+    g.score = Math.max(g.score, a.score);
+  }
+  const groups = [...by.values()];
+  for(const g of groups){
+    g.score += g.items.length * 0.01;
+    g.items.sort((a, b) => GRADE_RANK[a.grade] - GRADE_RANK[b.grade] || b.score - a.score);
+    const vac = g.items.filter(a => a.kind === "vacant").sort((a, b) => ["com","dev","sec"].indexOf(a.stat) - ["com","dev","sec"].indexOf(b.stat)).map(a => STAT_KO[a.stat]);
+    g.text = [vac.length ? vac.join("·") + " 담당 없음" : "",
+      ...g.items.filter(a => a.kind !== "vacant").map(a => ALERT_KIND_KO[a.kind] || a.text)].filter(Boolean).join(" · ");
+    g.stat = g.items[0].stat || null;
+  }
+  groups.sort((a, b) => GRADE_RANK[a.grade] - GRADE_RANK[b.grade] || b.score - a.score);
+  list.sort((a, b) => GRADE_RANK[a.grade] - GRADE_RANK[b.grade] || b.score - a.score);
+  const cards = groups.slice(0, ALERT_CARDS), rest = groups.slice(ALERT_CARDS);
+  const count = { S:0, A:0, B:0 };
+  for(const a of list) count[a.grade]++;
+  /* ★ 기회 — 지도 마커와 같은 판정 (`mapMarkOf`). 이름까지 아는 재야가 먼저, 없으면 무주공산 */
+  let opp = null;
+  for(const c of CITIES){
+    if(S.cities[c.i]) continue;
+    const f = S.fog && S.fog[c.i]; if(!f || !f.snap) continue;
+    const m = mapMarkOf(c.i, f, knownTier(c.i));
+    if(m.rogue){ opp = { cid:c.i, mark:"★", text:`재야 ${m.rogues.map(x => genById(x.id).name).join("·")} — 등용할 수 있다` }; break; }
+    if(m.vacant && !opp) opp = { cid:c.i, mark:"◇", text:"무주공산 — 이동하면 무혈 편입" };
+  }
+  const vac = list.filter(a => a.kind === "vacant");
+  return { list, groups, cards, rest, count, opp, total:list.length,
+    restN: rest.reduce((n, g) => n + g.items.length, 0),
+    vacant: vac.length ? { n:vac.length, cities:new Set(vac.map(a => a.cid)).size, kinds:new Set(vac.map(a => a.stat)).size } : null };
+}
+
+/* ═══ 추천 배치 — 일회성 제안 (v3.154 · F2 · 19 §2.3) ═══
+   🔥 **새 규칙이 아니다.** 담당 없는 상업·개발·치안에 적격 장수를 *한 번* 제안하고, 수락하면 사람이 한 건씩 누른 것과 **같은 문**(`setDuty`)을 지난다.
+      점수 식은 참모 임무위임과 같은 `placeScore`/`placeTop` (복제 ❌) — 참모의 눈(노이즈)만 없다: 이것은 *참모의 대체*가 아니라 첫 15클릭을 덜어 주는 도구다.
+   ⚠️ `recoPlan` 은 **읽기 전용(드라이런)** 이다 — `S` 에 아무것도 쓰지 않는다 (회귀가 호출 전/후 해시로 지킨다).
+   ⚠️ 빠지는 것: 군주 · 이미 임무가 있는 장수 · 위임(태수) 도시 · 참모 임무위임(`autoDuty`) 도시 · 잠긴 임무 · 지친(`TIRED_ENTER`)/권태 장수 · 잠입자.
+      장수가 칸보다 모자라면 **급한 칸(성 수치가 낮은 쪽)부터** 채우고 나머지는 '배정 불가'로 보인다.
+   ⚠️ 자동 제안은 *새 게임 직후 1회* 뿐이다 (`recoPending` — 제목 화면의 새 판 경로만 세운다). 그 뒤로는 경보판의 단추를 눌렀을 때만 연다. */
+const RECO_DUTIES = ["commerce", "develop", "security"];
+const RECO_SHOW = 12;           // 표에 먼저 보이는 성 수 — 나머지는 '더 보기'
+const RECO_GRADE_KO = { "◎":"적임", "○":"무난", "△":"임시" };
+const recoGrade = w => w >= 70 ? "◎" : w >= 50 ? "○" : "△";   // 가중 능력치(0~100) 문턱 — 표시 전용
+let _recoC = null, RECO = null, recoPending = false, recoNote = null;
+function recoPlan(){
+  allAlerts();
+  if(_recoC && alertsCache && _recoC.k === alertsCache) return _recoC.v;
+  const by = new Map();
+  for(const [gid, gs] of Object.entries(S.generals)){
+    if(gs.spy) continue;
+    let a = by.get(gs.city); if(!a) by.set(gs.city, a = []);
+    a.push([gid, gs]);
+  }
+  const rows = [], skip = { delegated:0, auto:0 };
+  let n = 0, short = 0;
+  for(const [cid, st] of Object.entries(S.cities)){
+    if(st.delegated){ skip.delegated++; continue; }
+    if(st.autoDuty){ skip.auto++; continue; }
+    const here = by.get(cid) || [];
+    const vac = RECO_DUTIES.filter(d => !dutyLocked(d) && !here.some(([, gs]) => gs.duty === d));
+    if(!vac.length) continue;
+    const filled = { commerce:0, develop:0, security:0, fortify:0 };
+    for(const [gid, gs] of here){
+      if(filled[gs.duty] == null) continue;
+      const g = genById(gid); if(g) filled[gs.duty] += dutyWeight(g, DUTIES[gs.duty]);
+    }
+    const cands = here.filter(([gid, gs]) => gs.duty === "rest" && gid !== S.lord && !gs.burnout
+        && !(gs.tired && gs.fatigue >= B.TIRED_ENTER) && genById(gid))
+      .map(([gid]) => gid).sort((a, b) => placeTop(genById(b)) - placeTop(genById(a)));
+    /* 급한 칸 먼저 — 성 수치가 낮은 쪽, 같으면 경보 가중(ADVICE_W) */
+    const urgent = vac.slice().sort((a, b) => st[DUTIES[a].stat] - st[DUTIES[b].stat]
+      || (ADVICE_W[DUTIES[b].stat] || 0) - (ADVICE_W[DUTIES[a].stat] || 0));
+    const open = urgent.slice(0, cands.length), got = {};
+    for(const gid of cands){                                  // 강한 자부터 — 자리를 먼저 고른다
+      if(!open.length) break;
+      const g = genById(gid);
+      let best = null, bs = -Infinity;
+      for(const d of open){ const sc = placeScore(g, d, st, filled); if(sc > bs){ bs = sc; best = d; } }
+      got[best] = gid; filled[best] += dutyWeight(g, DUTIES[best]);
+      open.splice(open.indexOf(best), 1);
+    }
+    const slots = vac.map(d => ({ duty:d, gid:got[d] || null, short:!got[d], w: got[d] ? dutyWeight(genById(got[d]), DUTIES[d]) : 0 }));
+    for(const s of slots) s.gid ? n++ : short++;
+    rows.push({ cid, cands, slots });
+  }
+  const v = { rows, n, short, skip };
+  _recoC = { k: alertsCache, v };
+  return v;
+}
+/* 수락 — 칸마다 `setDuty` (사람이 장수 상세에서 임무를 누른 것과 같은 문). 그 사이 사정이 바뀐 칸은 건너뛴다.
+   반환: 실제로 배정한 건수. `list` = [{cid, duty, gid}] */
+function recoApply(list){
+  let n = 0;
+  const taken = new Set();
+  for(const x of list){
+    const gs = S.generals[x.gid];
+    if(!gs || gs.city !== x.cid || gs.spy || gs.duty !== "rest" || x.gid === S.lord || dutyLocked(x.duty)) continue;
+    const k = x.cid + "|" + x.duty;
+    if(taken.has(k) || Object.values(S.generals).some(o => o.city === x.cid && !o.spy && o.duty === x.duty)) continue;
+    if(setDuty(x.gid, x.duty, true) === false) continue;
+    taken.add(k); n++;
+  }
+  if(n){ endPick(false); save(); paintMap(); drawSide(); }       // 다시 그리기는 한 번 — 같은 문을 건별로 지났으니 상태는 한 건씩 누른 것과 같다
+  return n;
+}
+function openReco(first){
+  if(!S || pending || !$("#mask").classList.contains("off")) return false;
+  const plan = recoPlan(); if(!plan.n) return false;
+  const ord = new Map(alertBoard().groups.map((g, i) => [g.cid, i]));
+  const rows = plan.rows.map((r, i) => ({ ...r, i })).sort((a, b) =>
+    (ord.has(a.cid) ? ord.get(a.cid) : 1e6) - (ord.has(b.cid) ? ord.get(b.cid) : 1e6) || a.i - b.i);
+  RECO = { first: !!first, shown: RECO_SHOW, skip: plan.skip, rows: rows.map(r => ({ cid:r.cid, cands:r.cands,
+    slots: r.slots.map(s => ({ ...s, on: !!s.gid })) })) };
+  renderReco();
+  $("#mask").classList.remove("off");
+  return true;
+}
+/* 첫 턴 제안 — 새 게임 직후 *한 번*. 조언 줄·화면 안내가 다 끝난 빈틈에서만 연다 (`pumpAdv` 가 부른다) */
+function recoMaybeOffer(){
+  if(!recoPending || !S || advBusy || advQueue.length || tourOn() || pending || !$("#mask").classList.contains("off")) return;
+  recoPending = false;
+  openReco(true);
+}
+function renderReco(){
+  const R = RECO; if(!R) return;
+  const chip = g => `<i class="rcg" title="${RECO_GRADE_KO[g]}">${g}</i>`;
+  const all = R.rows.reduce((n, r) => n + r.slots.filter(s => s.gid).length, 0);
+  const sel = R.rows.reduce((n, r) => n + r.slots.filter(s => s.gid && s.on).length, 0);
+  const shortN = R.rows.reduce((n, r) => n + r.slots.filter(s => s.short && !s.gid).length, 0);
+  const vis = R.rows.slice(0, R.shown), hid = R.rows.length - vis.length;
+  const cell = (r, s) => {
+    const D = DUTIES[s.duty], k = r.cid + "|" + s.duty;
+    if(!s.gid && !r.cands.length) return `<div class="rcc none"><span class="rcd">${D.n}</span><em>배정 불가 — 쉬는 장수 없음</em></div>`;
+    const opts = `<option value="">— 제외 —</option>` + r.cands.map(gid => {
+      const g = genById(gid), w = dutyWeight(g, D);
+      return `<option value="${gid}"${gid === s.gid ? " selected" : ""}>${g.name} ${recoGrade(w)} ${Math.round(w)}</option>`;
+    }).join("");
+    const g = s.gid ? genById(s.gid) : null;
+    return `<div class="rcc${s.on && s.gid ? "" : " off"}"><label class="rcd"><input type="checkbox" data-rk="${k}"${s.on && s.gid ? " checked" : ""}${s.gid ? "" : " disabled"}> ${D.n}</label>
+      <select data-rs="${k}" aria-label="${cityById(r.cid).n} ${D.n} 담당">${opts}</select>
+      <span class="rce">${g ? `${chip(recoGrade(s.w))} ${RECO_GRADE_KO[recoGrade(s.w)]} · 균형점 +${Math.round(s.w)}` : s.short ? "<em>배정 불가 — 장수가 모자람</em>" : "<em>제외 — 수락해도 배정하지 않음</em>"}</span></div>`;
+  };
+  const dlg = $("#dlg"), top = dlg.scrollTop;
+  dlg.innerHTML = `<h2>추천 배치</h2>
+    <div class="sub">${R.first ? "새 판의 첫 달입니다. " : ""}담당 없는 상업·개발·치안에 알맞은 장수를 <b>한 번</b> 제안합니다 — 달마다 되풀이하지 않습니다.
+      군주 · 이미 임무가 있는 장수 · 위임·참모위임 성${R.skip.delegated + R.skip.auto ? `(${R.skip.delegated + R.skip.auto}성)` : ""} · 지친 장수는 빠져 있습니다.</div>
+    <div class="rcgrid"><div class="rch"><span>성</span><span>상업</span><span>개발</span><span>치안</span></div>
+    ${vis.map(r => `<div class="rcr"><div class="rcn">${cityById(r.cid).n}${r.cid === S.capital ? "<i>수도</i>" : ""}</div>
+      ${RECO_DUTIES.map(d => { const s = r.slots.find(x => x.duty === d);
+        return s ? cell(r, s) : `<div class="rcc skip"><em>—</em></div>`; }).join("")}</div>`).join("")}</div>
+    ${hid > 0 ? `<button class="rcmore" id="rcMore">나머지 ${hid}성 더 보기 (+${Math.min(hid, RECO_SHOW)}) ▾</button>` : ""}
+    <div class="rcnote">달마다 맡기려면 군사를 두고 <b>임무위임</b>을 켜십시오. 수락한 배정은 장수 상세에서 언제든 바꿀 수 있습니다.${shortN ? ` · 배정 불가 ${shortN}칸은 장수가 모자랍니다.` : ""}</div>
+    <div class="rcfoot"><span class="rcsum">제안 <b>${all}</b>건 · 선택 <b>${sel}</b>건 · ${R.rows.length}성</span>
+      <button id="rcAll"${all ? "" : " disabled"}>모두 수락 (${all})</button>
+      ${sel !== all ? `<button id="rcSel"${sel ? "" : " disabled"}>선택만 수락 (${sel})</button>` : ""}
+      <button id="rcClose" class="no">${R.first ? "나중에" : "닫 기"}</button></div>`;
+  dlg.scrollTop = top;
+  const byKey = k => { const [cid, duty] = k.split("|"); const r = R.rows.find(x => x.cid === cid); return [r, r.slots.find(s => s.duty === duty)]; };
+  dlg.querySelectorAll("input[data-rk]").forEach(e => e.onchange = () => { const [, s] = byKey(e.dataset.rk); s.on = e.checked; renderReco(); });
+  dlg.querySelectorAll("select[data-rs]").forEach(e => e.onchange = () => {
+    const [r, s] = byKey(e.dataset.rs);
+    s.gid = e.value || null; s.on = !!s.gid; s.w = s.gid ? dutyWeight(genById(s.gid), DUTIES[s.duty]) : 0;
+    if(s.gid) for(const o of r.slots) if(o !== s && o.gid === s.gid){ o.gid = null; o.on = false; o.w = 0; }   // 한 장수는 한 칸
+    renderReco();
+  });
+  const more = $("#rcMore"); if(more) more.onclick = () => { R.shown += RECO_SHOW; renderReco(); };
+  const go = all => {
+    const list = [];
+    for(const r of R.rows) for(const s of r.slots) if(s.gid && (all || s.on)) list.push({ cid:r.cid, duty:s.duty, gid:s.gid });
+    const n = recoApply(list), skipped = list.length - n;
+    recoNote = { turn:S.turn, text:`추천 배치 ${n}건을 배정했다${skipped ? ` (사정이 바뀐 ${skipped}건 제외)` : ""} — 바꾸려면 장수 상세에서.` };
+    RECO = null; $("#mask").classList.add("off"); save(); drawSide(); draw();
+  };
+  $("#rcAll").onclick = () => go(true);
+  const sb = $("#rcSel"); if(sb) sb.onclick = () => go(false);
+  $("#rcClose").onclick = () => { RECO = null; $("#mask").classList.add("off"); draw(); };
 }
 
 /* ═══ 참모의 내정 조언 (v3.53) ═══════════════════════════════════════
@@ -13174,7 +13486,8 @@ function openGeneral(gid){
 }
 
 /* 임무 변경 — 다른 임무의 목표는 지우고, 지도 하이라이트를 갱신한다 */
-function setDuty(gid, duty){
+/* `quiet` = 묶음 호출(`recoApply`)용 — **상태는 똑같이 바꾸고 다시 그리기만 뒤로 미룬다** (109건을 한 건씩 그리면 3초). 부른 쪽이 끝에 한 번 그린다. */
+function setDuty(gid, duty, quiet){
   const gs = S.generals[gid];
   /* 🔥 **여기가 유일한 문이어야 한다 (v3.82).** UI 버튼만 잠그면 위임·참모·회귀 하네스가
      그대로 통과한다 — 실제로 `assignByAdvisor` 가 황건에게 상업을 시키고 있었다. */
@@ -13193,6 +13506,7 @@ function setDuty(gid, duty){
   /* 도시 선택도 임무가 바뀌면 무효다 — 등용으로 고른 도시가 위서에 그대로 남으면
      "적 도시가 아닌 곳에 위서를 보낸다"는 상태가 만들어진다 */
   if(was !== duty) gs.tgtCity = null;
+  if(quiet) return;
   endPick(false);                 // 이전 임무의 지목 상태를 먼저 정리한다
   save(); paintMap(); drawSide();
 }
@@ -20044,6 +20358,7 @@ function titleScreen(step){
     newGame(pickFid);
     S.diff = b.dataset.d; save();
     draw();
+    recoPending = true;     // 추천 배치 첫 턴 제안 — 조언·안내가 끝난 빈틈에 한 번 (`recoMaybeOffer`)
     firstRunAsk();          // 답하면 문이 열리고 밀려 있던 조언이 이어서 나온다
   });
 }
@@ -20627,7 +20942,7 @@ addEventListener("resize", () => {
   fitTestBar();          // 시험 바가 줄바꿈되면 높이가 바뀐다 — 하단 조작부를 다시 비켜 준다
 });
 </script>
-<script>window.__BUILD="06203dac";</script>
+<script>window.__BUILD="a02fb516";</script>
 <script>
 /* PWA — 서비스워커(오프라인 시작) · 저장소 영속 요청. build_web.mjs 가 붙인다.
    v3.142 — 갱신 확인: 시작 · 포그라운드 복귀 때 registration.update() 와 version.txt(캐시 우회) 를 본다.
