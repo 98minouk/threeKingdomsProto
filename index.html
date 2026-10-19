@@ -25,7 +25,7 @@
 :root{
   --ink:#120d10; --ink2:#1b1419; --paper:#291d23; --paperhi:#372630;
   --line:#4d3540; --line2:#6b4a56; --line3:#3a2831;   /* line3 = 행 구분용 약한 선 */
-  --tx:#f7efe4; --tx2:#cbb2b8; --tx3:#9a848e;
+  --tx:#f7efe4; --tx2:#cbb2b8; --tx3:#a8939d;   /* v3.157 QW4 — 옛 #9a848e 는 --paperhi 위 4.09:1 (AA 미달). 5.0:1 이상 */
   --vermilion:#f0472f; --gold:#f7b62e; --jade:#35c2a1; --indigo:#7b95f7;
   /* 자수(紫綬) — 한대 고관이 차던 인끈 색. 인사(人事) 갈래 전용이다.
      여섯 번째 갈래가 생기면서 기존 넷으로는 색이 모자랐다. */
@@ -121,7 +121,7 @@
 :root[data-theme="light"]{
   --ink:#cdbf9e; --ink2:#dbcfb0; --paper:#f2ead4; --paperhi:#fcf7e8;
   --line:#a8946e; --line2:#8a7654; --line3:#bfae8b;
-  --tx:#191410; --tx2:#4a4033; --tx3:#6e6250;
+  --tx:#191410; --tx2:#4a4033; --tx3:#574c3b;   /* v3.157 QW4 — 옛 #6e6250 은 --ink 위 3.27:1. 4.6:1 이상 */
   --vermilion:#c0281c; --gold:#9a6c08; --jade:#1f6b54; --indigo:#2c4f96; --violet:#6a3d8f;
   --navy:#1c6481;   /* 수군 (N4) — 죽간 위의 물빛 먹. 석청(#2c4f96)·옥(#1f6b54)과 색상으로 갈린다 */
   /* 라이트의 강조색은 어두우므로 위에 얹는 글자는 밝아야 한다.
@@ -203,14 +203,33 @@ html.gesture .node.pickable rect{animation:none}
 html.touch svg.map{will-change:transform}
 .touchonly{display:none}
 html.touch .touchonly{display:inline-flex}
+/* ═══ v3.157 QW2 · QW5 — 화면 마감 (docs/20 §5-2·5) ═══
+   QW2 흰 기본 스크롤바 → 토큰 색 얇은 바. Chrome 121+/Firefox 는 표준 두 속성, Safari 는 ::-webkit-scrollbar. 터치(오버레이 스크롤)는 영향이 작다. 다크·라이트 둘 다 토큰이라 따라온다. */
+*{scrollbar-width:thin;scrollbar-color:var(--line2) transparent}
+*::-webkit-scrollbar{width:8px;height:8px}
+*::-webkit-scrollbar-track{background:transparent}
+*::-webkit-scrollbar-thumb{background:var(--line2);border-radius:4px}
+*::-webkit-scrollbar-thumb:hover{background:var(--tx3)}
+*::-webkit-scrollbar-corner{background:transparent}
+/* QW5 단추 호버·눌림 + 팝업 120ms 페이드. transform · opacity 만 쓴다(필터·블러 ❌ — 전투·지도 성능). :where 라 기존 단추별 규칙이 항상 이긴다.
+   noanim(회귀·스샷이 붙인다)이나 시스템의 '동작 줄이기' 이면 전부 끈다 */
+:where(button){transition:background-color .1s,border-color .1s,color .1s,transform .1s,opacity .1s}
+@media (hover:hover){ :where(button:not(:disabled)):hover{background-image:linear-gradient(rgba(255,255,255,.07),rgba(255,255,255,.07))} }
+:where(button:not(:disabled)):active{transform:translateY(1px);opacity:.9}
+@keyframes qwIn{from{opacity:0}to{opacity:1}}
+@keyframes qwUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.mask:not(.off),.advtop:not(.off),.ask:not(.off),#pmenu.on,.tour:not(.off){animation:qwIn .12s ease-out}
+.mask:not(.off)>.dlg,.advtop:not(.off)>.frame,.ask:not(.off)>.askbox,#pmenu.on>.pm,.tour:not(.off) .box{animation:qwUp .12s ease-out}
+@media (prefers-reduced-motion:reduce){ :where(button){transition:none} :where(button:not(:disabled)):active{transform:none} .mask,.advtop,.ask,#pmenu,.tour,.mask>.dlg,.advtop>.frame,.ask>.askbox,#pmenu>.pm,.tour .box{animation:none!important} }
+html.noanim :where(button){transition:none}
+html.noanim .mask,html.noanim .advtop,html.noanim .ask,html.noanim #pmenu,html.noanim .tour,html.noanim .mask>.dlg,html.noanim .advtop>.frame,html.noanim .ask>.askbox,html.noanim #pmenu>.pm,html.noanim .tour .box{animation:none!important}
 /* ═══ 아이패드 레이아웃 — 안 A: 지도 우선 + 서랍 (v3.143 · PD 결정 2026-10-12) ═══
    조건 = html.tab (= html.touch 이면서 폭 ≤1400, JS 가 붙인다). 데스크톱(마우스)은 한 줄도 안 바뀐다.
    지도가 가로 100% · 세로 약 750. 기록(왼쪽)·도시 상세(오른쪽)는 지도 위에 얹는 **서랍**이라 열고 닫아도 지도 크기가 안 변한다(재피팅 없음).
    설정성 단추(세이브·자동 전쟁·테마·도움말·진단·메인메뉴)는 헤더의 ☰ 메뉴로 모았다. 월 달력은 숫자만 한 줄로 남긴다. */
 /* ☰ 는 PC 에도 있다 (v3.145 · 기존 단추는 그대로 두고 메뉴를 더한다) */
-.hdl,#legbtn{display:none}
+.hdl{display:none}
 html.tab .hdl{display:block}
-html.tab #legbtn{display:inline-flex;align-items:center}
 html.tab #bLog,html.tab #bTheme,html.tab #bHelp,html.tab .foot{display:none}
 html.tab header{height:48px;border-bottom-width:2px}
 html.tab .hcell{padding:2px 9px}
@@ -246,10 +265,8 @@ html.tab .main.dR .hdlR{right:min(520px,56vw)}
 html.tab .hdl .bd{display:inline-block;background:var(--vermilion);color:var(--onacc);font-size:13px;font-weight:800;padding:2px 3px;writing-mode:horizontal-tb;margin-bottom:4px}
 html.tab .mapbtn{left:10px;right:auto;top:10px;gap:6px}
 html.tab .mapbtn button{min-height:44px;min-width:56px;padding:0 14px;font-size:16px}
-html.tab .legend{display:none;left:10px;top:64px;z-index:5}
-html.tab .maphint{display:none;z-index:5;left:10px;bottom:10px;max-width:70%}
-html.tab .mapwrap.legopen .legend{display:flex}
-html.tab .mapwrap.legopen .maphint{display:block}
+html.tab .legend{left:10px;top:64px;z-index:5}
+html.tab .maphint{z-index:5;left:10px;bottom:10px;max-width:70%}
 html.tab #side button,html.tab #logbar button{min-height:44px}
 /* 메뉴 시트 */
 #pmenu{position:fixed;inset:0;z-index:70;background:rgba(8,6,4,.78);display:none;align-items:center;justify-content:center;padding:22px}
@@ -259,7 +276,7 @@ html.tab #side button,html.tab #logbar button{min-height:44px}
 #pmenu .pmb{display:block;width:100%;min-height:52px;margin:0 0 8px;background:var(--paperhi);border:2px solid var(--line);color:var(--tx);font-size:19px;text-align:left;padding:8px 14px}
 #pmenu .pmb i{font-style:normal;float:right;font-size:15px;color:var(--tx2)}
 #pmenu .pmb.danger{border-color:var(--vermilion);color:var(--vermilion)}
-#pmenu .pmv{margin-top:6px;font-size:13px;color:var(--tx3);text-align:center}
+#pmenu .pmv{margin-top:6px;font-size:14px;color:var(--tx3);text-align:center}
 #pmenu p{font-size:17px;line-height:1.75;margin:0 0 14px}
 /* ═══ 성능 진단 HUD (v3.142 · 실기 전용) — 층을 하나씩 끄고 켜서 어느 층이 버벅임인지 가린다 ═══ */
 #diag{position:fixed;right:8px;top:calc(8px + env(safe-area-inset-top));z-index:99998;background:rgba(10,8,6,.92);
@@ -546,6 +563,12 @@ body.nolog .logbar{display:none}
 .legend{position:absolute;left:14px;top:14px;display:flex;flex-direction:column;gap:3px;
   background:color-mix(in srgb, var(--map-panel) 86%, transparent);padding:8px 10px;
   box-shadow:inset 2px 2px 0 var(--map-panel-line), inset -2px -2px 0 var(--map-panel-dark);pointer-events:none}
+/* 🔄 v3.157 QW1 — 범례 상자·안내 줄은 **기본 접힘**(PC 도 — 시작 성이 범례에 가렸다 · docs/20 §5-1). '범례' 칩을 누르면 펼친다 · 기억한다(sk3_proto_legend) */
+.legend,.maphint{display:none}
+.mapwrap.legopen .legend{display:flex}
+.mapwrap.legopen .maphint{display:block}
+.mapbtn #legbtn{display:inline-flex;align-items:center}
+.mapwrap.legopen #legbtn{border-color:var(--gold);color:var(--gold)}
 .legend .lg{display:flex;align-items:center;gap:6px;font-size:14.5px;color:var(--tx2);white-space:nowrap}
 .legend .lg.me{color:var(--tx);font-weight:800}
 .legend .lg i{width:11px;height:11px;flex:0 0 auto;border:1px solid var(--ink2)}
@@ -611,7 +634,7 @@ body.nolog .logbar{display:none}
   box-shadow:inset 2px 2px 0 var(--line2), inset -2px -2px 0 var(--ink2);color:var(--tx2)}
 .scen button.on{box-shadow:inset 0 0 0 2px var(--gold);color:var(--tx)}
 .scen button b{display:block;font-size:16px}
-.scen button span{font-size:12.5px;color:var(--tx3);line-height:1.45}
+.scen button span{font-size:14px;color:var(--tx3);line-height:1.45}
 /* 각주는 **할 말이 있을 때만** 나온다. 비면 자리도 안 먹는다 (min-height 없음) */
 .stat .dl{font-size:14.5px;margin-top:6px;line-height:1.5;color:var(--tx3)}
 .stat .dl:empty{display:none}
@@ -687,11 +710,11 @@ body.nolog .logbar{display:none}
 .gchip.gA{color:var(--gold)}
 .gchip.gB{color:var(--tx3)}
 .gchip.go{color:var(--jade)}
-.agr{padding:7px 18px 8px;font-size:13.5px;color:var(--tx3);border-bottom:1px solid var(--line3)}
+.agr{padding:7px 18px 8px;font-size:14px;color:var(--tx3);border-bottom:1px solid var(--line3)}
 .agr .gS{color:var(--vermilion);font-weight:800}.agr .gA{color:var(--gold);font-weight:700}.agr .go{color:var(--jade);font-weight:700}
 .agr .agv{margin-top:2px;color:var(--tx3)}
 .anow{border-bottom:2px solid var(--line)}
-.ahd{padding:7px 18px 2px;font-size:12.5px;font-weight:800;letter-spacing:.08em;color:var(--tx3)}
+.ahd{padding:7px 18px 2px;font-size:14px;font-weight:800;letter-spacing:.08em;color:var(--tx3)}
 .acard{display:flex;align-items:center;gap:6px;min-height:48px;padding:7px 18px;border-bottom:1px solid var(--line3);cursor:pointer;border-left:4px solid var(--gold)}
 .acard.gS{border-left-color:var(--vermilion);background:color-mix(in srgb, var(--vermilion) 9%, transparent)}
 .acard.gB{border-left-color:var(--line2)}
@@ -702,29 +725,30 @@ body.nolog .logbar{display:none}
 .acard.gS .ab b{color:var(--vermilion)}
 .acard.go .ab b{color:var(--jade)}
 .acard .ab span{font-size:14px;color:var(--tx2);line-height:1.4}
-.acard em,.agh em{font-style:normal;font-size:12.5px;font-weight:700;color:var(--tx3)}
+.acard em,.agh em{font-style:normal;font-size:14px;font-weight:700;color:var(--tx3)}
 .areco{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;min-height:44px;padding:8px 18px;text-align:left;background:color-mix(in srgb, var(--gold) 14%, var(--ink2));color:var(--gold);border:0;border-bottom:1px solid var(--line3);border-left:4px solid var(--gold);font:inherit;font-size:15px;font-weight:800;cursor:pointer}
-.areco span{font-size:12.5px;font-weight:600;color:var(--tx3)}
+.areco{white-space:nowrap}   /* v3.157 QW4 — 글자를 14px 로 올리자 제목이 두 줄로 꺾였다. 제목은 한 줄, 부제가 줄어든다 */
+.areco span{font-size:14px;font-weight:600;color:var(--tx3);min-width:0;overflow:hidden;text-overflow:ellipsis}
 .areco:hover{background:var(--paper)}
-.arnote{padding:7px 18px;font-size:13.5px;line-height:1.45;color:var(--jade);border-bottom:1px solid var(--line3)}
+.arnote{padding:7px 18px;font-size:14px;line-height:1.45;color:var(--jade);border-bottom:1px solid var(--line3)}
 /* 추천 배치 표 (v3.154 · F2) — 성 한 줄 × 상업·개발·치안 세 칸. 칸마다 [체크 · 임무] + 장수 선택 + 적성 한 줄. 길면 창 안에서 스크롤, 아래 단추줄은 붙박이 */
 .rcgrid{margin-top:6px}
 .rch,.rcr{display:grid;grid-template-columns:92px repeat(3,minmax(0,1fr));gap:8px;align-items:start}
-.rch{font-size:12px;color:var(--tx3);letter-spacing:.06em;padding:0 0 6px;border-bottom:2px solid var(--line)}
+.rch{font-size:14px;color:var(--tx3);letter-spacing:.06em;padding:0 0 6px;border-bottom:2px solid var(--line)}
 .rcr{padding:8px 0;border-bottom:1px solid var(--line3)}
 .rcn{font-weight:800;font-size:15px;color:var(--tx);padding-top:10px}
 .rcn i{display:block;font-style:normal;font-size:11px;font-weight:700;color:var(--gold)}
 .rcc{display:flex;flex-direction:column;gap:3px;min-width:0}
 .rcc.off select,.rcc.off .rce{opacity:.55}
-.rcc.none em,.rcc.skip em{font-size:12.5px;color:var(--tx3);font-style:normal}
-.rcd{display:flex;align-items:center;gap:6px;min-height:22px;font-size:12.5px;font-weight:700;color:var(--tx2)}
+.rcc.none em,.rcc.skip em{font-size:14px;color:var(--tx3);font-style:normal}
+.rcd{display:flex;align-items:center;gap:6px;min-height:22px;font-size:14px;font-weight:700;color:var(--tx2)}
 .rcd input{width:20px;height:20px;accent-color:var(--gold);margin:0}
 .rcc select{min-height:44px;width:100%;font:inherit;font-size:14.5px;font-weight:700;background:var(--ink2);color:var(--tx);border:1.5px solid var(--line2);padding:0 6px}
-.rce{font-size:12.5px;color:var(--tx3);line-height:1.35}
+.rce{font-size:14px;color:var(--tx3);line-height:1.35}
 .rce em{font-style:normal}
 .rcg{font-style:normal;font-weight:800;color:var(--jade)}
 .rcmore{display:block;width:100%;min-height:44px;margin-top:8px;background:var(--ink2);color:var(--tx2);border:1.5px solid var(--line2);font:inherit;font-size:14px;font-weight:700;cursor:pointer}
-.rcnote{margin-top:12px;font-size:13px;line-height:1.5;color:var(--tx3)}
+.rcnote{margin-top:12px;font-size:14px;line-height:1.5;color:var(--tx3)}
 .rcfoot{position:sticky;bottom:-28px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:12px -32px -28px;padding:12px 32px;background:var(--ink);border-top:2px solid var(--line)}
 .rcsum{flex:1;min-width:140px;font-size:14px;color:var(--tx2)}.rcsum b{color:var(--gold)}
 .rcfoot button{min-height:44px;padding:0 16px;font:inherit;font-size:15px;font-weight:800;cursor:pointer;background:var(--gold);color:var(--onacc);border:0}
@@ -750,10 +774,10 @@ body.nolog .logbar{display:none}
 .advice .anm{color:var(--gold);font-weight:700;margin-right:7px}
 .advice .atx{color:var(--tx)}
 .arow{display:flex;align-items:center;gap:10px;margin-top:6px;flex-wrap:wrap}
-.asub{font-size:13px;color:var(--tx3)}
+.asub{font-size:14px;color:var(--tx3)}
 .asub.dim{opacity:.75}
 .autoduty{background:var(--paper);border:2px solid var(--line);padding:4px 10px;
-  font-size:13.5px;color:var(--tx2);margin-left:auto}
+  font-size:14px;color:var(--tx2);margin-left:auto}
 .autoduty.on{border-color:var(--jade);color:var(--jade);font-weight:700}
 .autoduty:hover{border-color:var(--gold)}
 .rchips{display:grid;grid-template-columns:1fr 1fr;gap:11px;padding:14px 18px;
@@ -800,13 +824,13 @@ body.nolog .logbar{display:none}
 .deleg .rvwarn > b{color:var(--vermilion)}
 .deleg .rvwarn > b.ok{color:var(--tx3);font-weight:400}
 .deleg .rvwarn.hot > b{animation:fl 1.1s ease-in-out infinite}
-.deleg .rvk{color:var(--tx3);margin-left:6px;font-size:13.5px}
-.deleg .rvr{color:var(--tx3);font-size:13.5px;line-height:1.5;margin-top:2px;word-break:keep-all}
+.deleg .rvk{color:var(--tx3);margin-left:6px;font-size:14px}
+.deleg .rvr{color:var(--tx3);font-size:14px;line-height:1.5;margin-top:2px;word-break:keep-all}
 .deleg .rvact{margin-top:7px}
 .deleg .rvact button{background:var(--ink);border:0;color:var(--tx2);padding:6px 12px;
   font-size:13.5px;font-weight:700;box-shadow:inset 2px 2px 0 var(--ink2), inset -2px -2px 0 var(--line2)}
 .deleg .rvact button:hover{color:var(--violet);box-shadow:inset 0 0 0 2px var(--violet)}
-.deleg .rvau{color:var(--tx3);font-size:13.5px}
+.deleg .rvau{color:var(--tx3);font-size:14px}
 /* ═══ 연회 (v3.17) ═══ 재정 예고줄과 위임 상자 사이. 세력 단위 제한이라 문구가 값보다 중요하다 */
 .feast{display:flex;align-items:center;gap:11px;margin:0 18px 14px;padding:9px 13px;
   background:var(--paper);box-shadow:inset 2px 2px 0 var(--line2), inset -2px -2px 0 var(--ink2)}
@@ -814,7 +838,7 @@ body.nolog .logbar{display:none}
   font-size:15px;font-weight:800;box-shadow:inset 2px 2px 0 var(--ink2), inset -2px -2px 0 var(--line2)}
 .feast button:hover:not(:disabled){color:var(--gold);box-shadow:inset 0 0 0 2px var(--gold)}
 .feast button:disabled{color:var(--tx3);opacity:.5}
-.feast button i{font-style:normal;font-size:12.5px;color:var(--tx3);margin-left:6px}
+.feast button i{font-style:normal;font-size:14px;color:var(--tx3);margin-left:6px}
 .feast .fsi{flex:1;font-size:14px;line-height:1.5;color:var(--tx2);min-width:0;word-break:keep-all}
 
 /* ═══ 폭정 (v3.18 · 02 §5) ═══
@@ -823,7 +847,7 @@ body.nolog .logbar{display:none}
   box-shadow:inset 0 0 0 2px color-mix(in srgb, var(--vermilion) 55%, transparent)}
 .extort.dire{box-shadow:inset 0 0 0 2px var(--vermilion)}
 .exh{font-size:15px;font-weight:800;color:var(--vermilion);margin-bottom:7px}
-.exh span{font-weight:400;font-size:13px;color:var(--tx3);margin-left:7px}
+.exh span{font-weight:400;font-size:14px;color:var(--tx3);margin-left:7px}
 .exb{font-size:14px}
 .exg{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
 .exg button{background:var(--ink);border:0;color:var(--tx2);padding:7px 9px;text-align:left;
@@ -831,15 +855,15 @@ body.nolog .logbar{display:none}
 .exg button:hover{color:var(--vermilion);box-shadow:inset 0 0 0 2px var(--vermilion)}
 .exg .dn{display:block;font-size:14px;font-weight:800;white-space:nowrap}
 .exg .dn i{font-style:normal;display:block;font-size:12.5px;color:var(--gold);margin-top:1px}
-.exg .dp{display:block;font-size:12px;color:var(--tx3);margin-top:3px;line-height:1.4}
-.exn{margin-top:7px;font-size:13px;color:var(--tx2);line-height:1.5;word-break:keep-all}
+.exg .dp{display:block;font-size:14px;color:var(--tx3);margin-top:3px;line-height:1.4}
+.exn{margin-top:7px;font-size:14px;color:var(--tx2);line-height:1.5;word-break:keep-all}
 
 /* ═══ 보물 (v3.16) ═══ 처분 층과 같은 문법. 든 것은 한 줄, 국고는 격자 */
 .trow{display:flex;align-items:center;gap:10px;padding:8px 11px;background:var(--paper);
   box-shadow:inset 2px 2px 0 var(--line2), inset -2px -2px 0 var(--ink2);font-size:14.5px}
 .trow .tnm{flex:0 0 auto;font-weight:800;color:var(--gold)}
-.trow .tnm i{font-style:normal;font-size:12px;color:var(--tx3);margin-left:5px}
-.trow .tef{flex:1;color:var(--tx2);font-size:13.5px;min-width:0;word-break:keep-all}
+.trow .tnm i{font-style:normal;font-size:14px;color:var(--tx3);margin-left:5px}
+.trow .tef{flex:1;color:var(--tx2);font-size:14px;min-width:0;word-break:keep-all}
 .trow .tef i{font-style:normal;color:var(--tx3)}
 .trow button{flex:0 0 auto;background:var(--ink);border:0;color:var(--tx2);padding:6px 12px;
   font-size:13.5px;font-weight:700;box-shadow:inset 2px 2px 0 var(--ink2), inset -2px -2px 0 var(--line2)}
@@ -849,7 +873,7 @@ body.nolog .logbar{display:none}
   font-size:14.5px;font-weight:800;text-align:left;
   box-shadow:inset 2px 2px 0 var(--line2), inset -2px -2px 0 var(--ink2)}
 .tgive button:hover{box-shadow:inset 0 0 0 2px var(--gold)}
-.tgive button i{font-style:normal;font-size:13px;color:var(--tx3);margin-left:6px}
+.tgive button i{font-style:normal;font-size:14px;color:var(--tx3);margin-left:6px}
 /* 갈래 그림 — 없으면 절차적 타일(갈래 한자 + 갈래색). 초상과 같은 3단 폴백 문법 */
 .tic{width:34px;height:34px;flex:0 0 auto;object-fit:contain;image-rendering:pixelated}
 .tic.tif{display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;
@@ -884,9 +908,9 @@ body.nolog .logbar{display:none}
 /* 모든 행을 가로지른다 — `span 3` 이면 fx·궁합·근거로 행이 늘 때 그림만 위로 쏠린다 */
 .tpc .tic{grid-row:1 / -1;align-self:center}
 .tpc .tpn{font-size:15.5px;font-weight:800;color:var(--gold);white-space:nowrap}
-.tpc .tpn i{font-style:normal;font-size:12px;color:var(--tx3);margin-left:5px}
+.tpc .tpn i{font-style:normal;font-size:14px;color:var(--tx3);margin-left:5px}
 .tpc .tpk{justify-self:start;font-size:12px;font-weight:700;border:1px solid;padding:1px 6px}
-.tpc .tpe{font-size:13.5px;color:var(--tx2);word-break:keep-all}
+.tpc .tpe{font-size:14px;color:var(--tx2);word-break:keep-all}
 .tpc .tpe b{color:var(--tx)}
 /* fx·궁합·근거 줄. **제일 긴 카드가 격자 전체의 높이를 정하므로**(`grid-auto-rows:1fr`)
    여기를 조이는 것이 곧 모든 카드를 낮추는 일이다 — 실측 179 → 151px. */
@@ -912,13 +936,13 @@ body.nolog .logbar{display:none}
 .crow .cwho{flex:0 0 132px;color:var(--tx);white-space:nowrap;overflow:hidden}
 /* ⚠️ 전역 `.empty` 는 안내문용이라 padding 38px 이 붙는다 — 이름이 겹치면 칸이 76px 부푼다 */
 .crow .cwho.vac{color:var(--tx3)}
-.crow .cwho .cs{font-style:normal;font-size:12.5px;color:var(--tx3);margin-left:4px}
-.crow .ceff{flex:1;color:var(--tx3);font-size:13.5px;min-width:0;word-break:keep-all}
+.crow .cwho .cs{font-style:normal;font-size:14px;color:var(--tx3);margin-left:4px}
+.crow .ceff{flex:1;color:var(--tx3);font-size:14px;min-width:0;word-break:keep-all}
 /* 역할 줄 — 이름 칸 아래에 들여쓴다. `flex:1 0 100%` 로 한 줄을 통째로 차지한다.
    ⚠️ 들여쓰기는 **margin 이 아니라 padding** 이라야 한다. `flex-basis:100%` 에 `margin-left`
       를 주면 폭이 100%+128px 이 되어 **창에 가로 스크롤이 생긴다** (실측으로 잡았다).
       `*{box-sizing:border-box}` 라 padding 은 100% 안쪽으로 들어간다. */
-.crow .crole{flex:1 0 100%;margin:1px 0 2px;padding-left:128px;font-size:13px;line-height:1.5;
+.crow .crole{flex:1 0 100%;margin:1px 0 2px;padding-left:128px;font-size:14px;line-height:1.5;
   color:var(--tx3);word-break:keep-all}
 .crow .crole b{color:var(--gold);font-weight:700}
 /* 역할 줄 안에 앉는 작은 스위치 — 임명·해임 단추와 같은 크기면 자리를 다투는 것처럼 보인다 */
@@ -932,7 +956,7 @@ body.nolog .logbar{display:none}
   box-shadow:inset 0 0 0 2px var(--violet)}
 .cph{font-size:14.5px;font-weight:800;color:var(--violet);margin-bottom:4px}
 /* 고르는 창의 역할 줄 (v3.54) */
-.cpr{font-size:13px;line-height:1.55;color:var(--tx3);margin-bottom:8px;word-break:keep-all}
+.cpr{font-size:14px;line-height:1.55;color:var(--tx3);margin-bottom:8px;word-break:keep-all}
 .cpr b{color:var(--gold);font-weight:700}
 /* 이 자리가 보는 스탯만 금색으로 — 후보를 훑을 때 어느 숫자를 봐야 하는지가 바로 읽힌다 */
 .cpb .cps b{color:var(--gold);font-weight:800}
@@ -941,8 +965,8 @@ body.nolog .logbar{display:none}
   box-shadow:inset 2px 2px 0 var(--line2), inset -2px -2px 0 var(--ink2)}
 .cpb:hover{box-shadow:inset 0 0 0 2px var(--gold)}
 .cpb .cpn{flex:0 0 78px;font-weight:800;color:var(--tx)}
-.cpb .cps{flex:0 0 150px;font-size:13px;color:var(--tx3)}
-.cpb .cpm{flex:1;font-size:13px;color:var(--tx3);white-space:nowrap}
+.cpb .cps{flex:0 0 150px;font-size:14px;color:var(--tx3)}
+.cpb .cpm{flex:1;font-size:14px;color:var(--tx3);white-space:nowrap}
 .cpb .cpl{flex:0 0 auto;font-weight:800;font-size:13.5px}
 .cpb .cpl i{font-style:normal;font-size:12px}
 /* 헤더 경고 — 자리를 기다리는 자가 있다 */
@@ -982,11 +1006,11 @@ body.nolog .logbar{display:none}
   font-size:15.5px}
 .ldr:last-child{border-bottom:0}
 .ldn{flex:1;font-weight:700;color:var(--tx)}
-.ldz{font-size:13.5px;color:var(--tx3);margin-left:5px;font-weight:400}
+.ldz{font-size:14px;color:var(--tx3);margin-left:5px;font-weight:400}
 .ldt{font-weight:800;width:16px;text-align:center}
 /* 🔥 봉급은 평균만이 아니라 **최고 스탯**도 본다 (docs/07 §1.1). 평균만 띄우면
    여포(평균57)가 여범(평균69)과 같은 값인 게 버그로 보인다 — 값을 정하는 항을 같이 보인다. */
-.ldavg{color:var(--tx3);font-size:13px;width:120px;text-align:right;line-height:1.25}
+.ldavg{color:var(--tx3);font-size:14px;width:120px;text-align:right;line-height:1.25}
 .ldavg b{color:var(--tx2);font-weight:700}
 /* ── 외교 (v3.42) ── */
 .dplist{margin:0 18px 16px;border:1px solid var(--line2);border-radius:6px;overflow:hidden}
@@ -994,7 +1018,7 @@ body.nolog .logbar{display:none}
   padding:10px 14px;border-bottom:1px solid var(--line3)}
 .dprow:last-child{border-bottom:0}
 .dpn{font-size:15px}
-.dpc{color:var(--tx3);font-size:12.5px;margin-left:6px}
+.dpc{color:var(--tx3);font-size:14px;margin-left:6px}
 /* 관계도 막대 — 숫자만 두면 '지금 어디쯤인가'가 안 읽힌다. 가운데가 중립이다 */
 .dpbar{height:8px;background:var(--line3);border-radius:4px;position:relative;overflow:hidden}
 .dpbar::after{content:"";position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--line1)}
@@ -1009,7 +1033,7 @@ body.nolog .logbar{display:none}
 .dbtn i{display:block;font-style:normal;font-size:11px;color:var(--gold);margin-top:1px}
 .ldm{color:var(--gold);font-weight:800;width:82px;text-align:right}
 .ldy{color:var(--tx2);font-weight:700;width:92px;text-align:right}
-.ldm i,.ldy i{font-style:normal;font-size:12.5px;color:var(--tx3);font-weight:400}
+.ldm i,.ldy i{font-style:normal;font-size:14px;color:var(--tx3);font-weight:400}
 
 .rlist{padding:12px 18px;border-bottom:1px solid var(--line);
   display:grid;grid-template-columns:auto 1fr;gap:6px 16px;font-size:18px}
@@ -1036,7 +1060,7 @@ img.por,img.por-lg{object-fit:cover;object-position:50% 18%;image-rendering:auto
 .dfwarn{margin-top:5px;font-size:14.5px;font-weight:800;color:var(--gold);
   line-height:1.4;word-break:keep-all}
 .dfwarn.hot{color:var(--vermilion)}
-.dfwarn i{display:block;font-style:normal;font-size:13px;font-weight:400;color:var(--tx2)}
+.dfwarn i{display:block;font-style:normal;font-size:14px;font-weight:400;color:var(--tx2)}
 .movepick{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px}
 /* 목표 후보 버튼 — 색은 임무 갈래(--pc)가 정한다. 상자·지도·배너가 같은 색을 써야
    "지금 고르는 중인 그것"이 세 곳에서 같은 것으로 읽힌다 (전에는 모략인데 초록이 나왔다) */
@@ -1063,14 +1087,14 @@ img.por,img.por-lg{object-fit:cover;object-position:50% 18%;image-rendering:auto
   background:var(--paper);border:3px solid var(--line);box-shadow:6px 6px 0 rgba(0,0,0,.5);
   padding:22px 26px}
 .askbox h3{margin:0 0 4px;font-size:22px;letter-spacing:.04em;color:var(--tx)}
-.asksub{font-size:13.5px;color:var(--tx3);margin-bottom:14px}
+.asksub{font-size:14px;color:var(--tx3);margin-bottom:14px}
 /* 참모의 말 — 왼쪽에 세로선. 조언(`.adv`)과 같은 어법이라 같은 사람이 말하는 것으로 읽힌다 */
 .askwho{border-left:3px solid var(--jade);padding:2px 0 2px 11px;margin:0 0 14px;
   font-size:14.5px;line-height:1.75;color:var(--tx2)}
 .askwho b{color:var(--jade)}
 .askrisk{border-left:3px solid var(--vermilion)}
 .askrisk b{color:var(--vermilion)}
-.askfacts{font-size:13.5px;line-height:1.9;color:var(--tx2);
+.askfacts{font-size:14px;line-height:1.9;color:var(--tx2);
   background:var(--ink2);border:2px solid var(--line);padding:11px 14px;margin:0 0 15px}
 .askfacts b{color:var(--gold)}
 .askbtns{display:grid;gap:8px}
@@ -1079,10 +1103,10 @@ img.por,img.por-lg{object-fit:cover;object-position:50% 18%;image-rendering:auto
 .askbtns button:hover{border-color:var(--gold)}
 .askbtns button.no{font-size:15px;padding:9px 16px;background:transparent;color:var(--tx3)}
 .askbtns button.no:hover{border-color:var(--tx3);color:var(--tx2)}
-.askbtns button i{font-style:normal;float:right;font-size:13.5px;color:var(--tx3);font-weight:400}
+.askbtns button i{font-style:normal;float:right;font-size:14px;color:var(--tx3);font-weight:400}
 
 /* ═══ 병력 재편성 (v3.74) ═══ */
-.mstbar{display:flex;align-items:center;gap:10px;padding:7px 18px 11px;font-size:13px;
+.mstbar{display:flex;align-items:center;gap:10px;padding:7px 18px 11px;font-size:14px;
   color:var(--tx3);border-bottom:1px solid var(--line)}
 .mstbar span{flex:1;min-width:0}
 .mstbar b{color:var(--tx2)}
@@ -1094,13 +1118,13 @@ img.por,img.por-lg{object-fit:cover;object-position:50% 18%;image-rendering:auto
 .dfbar i{margin-left:6px;font-size:12px}
 .dforow .dfon{flex:0 0 22px;text-align:right;font-weight:800;color:var(--gold);font-variant-numeric:tabular-nums}
 .dforow.idle .dfon,.dforow.idle .mstn{color:var(--tx3)}
-.dforow .dfos{flex:1;min-width:0;font-size:12.5px;color:var(--tx3)}
+.dforow .dfos{flex:1;min-width:0;font-size:14px;color:var(--tx3)}
 .dforow .dfos b{color:var(--tx2)}
 .dforow .dfob{flex:0 0 auto;display:flex;gap:4px}
 .dforow .dfob button{background:var(--paper);border:2px solid var(--line);color:var(--tx2);padding:1px 8px;font-size:12px}
 .dforow .dfob button:hover:not([disabled]){border-color:var(--gold);color:var(--gold)}
 .dforow .dfob button[disabled]{opacity:.35}
-.dfoaway{margin-top:8px;font-size:12.5px;color:var(--tx3)}
+.dfoaway{margin-top:8px;font-size:14px;color:var(--tx3)}
 /* v3.132 · N4 — 출전 줄은 왼쪽 금 띠, 대기 줄은 한 단 눌린다. 꼬리표는 글자가 아니라 작은 패(牌) */
 .dforow{padding-left:6px;box-shadow:inset 3px 0 0 transparent}
 .dforow.go{box-shadow:inset 3px 0 0 var(--gold)}
@@ -1108,7 +1132,7 @@ img.por,img.por-lg{object-fit:cover;object-position:50% 18%;image-rendering:auto
 .dforow .mstn i.dfotag{display:inline-block;margin-left:7px;padding:0 5px;font-size:11px;line-height:16px;font-weight:700;
   border:1px solid var(--line2);color:var(--tx3)}
 .dforow.go .mstn i.dfotag{border-color:var(--gold);color:var(--gold)}
-.dfocut{display:flex;align-items:center;gap:8px;margin:2px 0;padding:5px 0;font-size:12px;color:var(--tx3);
+.dfocut{display:flex;align-items:center;gap:8px;margin:2px 0;padding:5px 0;font-size:14px;color:var(--tx3);
   border-top:2px dashed var(--line2)}
 .dfocut span{color:var(--tx2);font-weight:800;letter-spacing:.06em}
 /* 재편성 창 — 한 줄에 장수 하나. 슬라이더가 주인공이라 이름·숫자는 폭을 고정한다 */
@@ -1119,9 +1143,9 @@ img.por,img.por-lg{object-fit:cover;object-position:50% 18%;image-rendering:auto
 .mstn i{font-style:normal;font-size:11.5px;color:var(--tx3);margin-left:5px;font-weight:400}
 .mstrow input[type=range]{flex:1;min-width:0;accent-color:var(--gold)}
 .mstv{flex:0 0 84px;text-align:right;font-variant-numeric:tabular-nums;color:var(--tx)}
-.mstd{flex:0 0 108px;text-align:right;font-size:12.5px;color:var(--tx3)}
+.mstd{flex:0 0 108px;text-align:right;font-size:14px;color:var(--tx3)}
 .mstd b{color:var(--jade)}
-.msthd{display:flex;gap:10px;font-size:12px;color:var(--tx3);letter-spacing:.06em;
+.msthd{display:flex;gap:10px;font-size:14px;color:var(--tx3);letter-spacing:.06em;
   padding-bottom:6px;border-bottom:2px solid var(--line)}
 .mstsum{display:flex;gap:14px;flex-wrap:wrap;margin:12px 0 0;padding:10px 13px;
   background:var(--ink2);border:2px solid var(--line);font-size:14px}
@@ -1138,13 +1162,13 @@ img.por,img.por-lg{object-fit:cover;object-position:50% 18%;image-rendering:auto
 .hnrow+.hnrow{border-top:1px solid var(--line3);margin-top:3px;padding-top:6px}
 .hnl{flex:0 0 46px;color:var(--tx3);font-weight:800;letter-spacing:2px}
 .hnv{flex:1;min-width:0;color:var(--tx2)}
-.hnv i{font-style:normal;color:var(--tx3);font-size:12.5px;margin-left:5px}
+.hnv i{font-style:normal;color:var(--tx3);font-size:14px;margin-left:5px}
 .hnrow button{flex:0 0 auto;background:var(--ink);border:0;color:var(--tx2);
   padding:5px 11px;font-size:13px;font-weight:700;
   box-shadow:inset 2px 2px 0 var(--ink2), inset -2px -2px 0 var(--line2)}
 .hnrow button:hover:not(:disabled){color:var(--gold);box-shadow:inset 0 0 0 2px var(--gold)}
 .hnrow button:disabled{opacity:.4}
-.hnrow button i{font-style:normal;font-weight:400;font-size:12px;color:var(--tx3);margin-left:6px}
+.hnrow button i{font-style:normal;font-weight:400;font-size:14px;color:var(--tx3);margin-left:6px}
 
 /* ═══ 휘하 병력 · 훈련도 (v3.65) ═══ */
 .troopbox{border:2px solid var(--line);background:var(--ink2);padding:11px 14px;margin:0 0 13px}
@@ -1157,7 +1181,7 @@ img.por,img.por-lg{object-fit:cover;object-position:50% 18%;image-rendering:auto
 .tbrow input[type=range]{flex:1;min-width:0;accent-color:var(--gold)}
 .tbrow>b{flex:0 0 auto;color:var(--tx);font-variant-numeric:tabular-nums}
 .tbbar{flex:1;min-width:0}
-.tbnote{font-size:12.5px;color:var(--tx3);line-height:1.6;margin-top:3px}
+.tbnote{font-size:14px;color:var(--tx3);line-height:1.6;margin-top:3px}
 .tbnote b{color:var(--tx2)}
 
 .gright{flex:0 0 auto;text-align:right}
@@ -1206,7 +1230,7 @@ img.por,img.por-lg{object-fit:cover;object-position:50% 18%;image-rendering:auto
    구별되지 않는다. 가로줄 + 머리글 + 다른 테두리 색으로 층을 나눈다. */
 .hrhd{margin:14px 0 8px;padding-top:11px;border-top:1px solid var(--line);
   font-size:15px;font-weight:800;letter-spacing:1px;color:var(--tx2)}
-.hrhd span{font-weight:400;letter-spacing:0;font-size:13.5px;color:var(--tx3);margin-left:8px}
+.hrhd span{font-weight:400;letter-spacing:0;font-size:14px;color:var(--tx3);margin-left:8px}
 .hrhd span b{color:var(--vermilion)}
 .hracts{display:grid;grid-template-columns:repeat(auto-fill,minmax(178px,1fr));gap:7px}
 .hra{background:var(--paperhi);border:2px dashed var(--line2);padding:10px 13px;text-align:left}
@@ -1346,23 +1370,24 @@ img.por,img.por-lg{object-fit:cover;object-position:50% 18%;image-rendering:auto
 .tmenu button:hover:not([disabled]),.tlist button:hover,.tgrid button:hover,.tback button:hover{
   background:var(--paperhi);box-shadow:inset 0 0 0 2px var(--gold);color:var(--gold)}
 .tmenu button[disabled]{color:var(--tx3);opacity:.55;cursor:not-allowed}
-.tsub{display:block;font-size:13px;font-weight:400;color:var(--tx3);margin-top:3px}
+.tsub{display:block;font-size:14px;font-weight:400;color:var(--tx3);margin-top:3px}
+.tmenu button{min-height:44px}   /* 터치 44px (수동 체험 v3.155) */
 /* 참모의 조언 (v3.99) — 도움말 안에서 접었다 펴는 목록 */
 .tiplist{max-height:34vh;overflow:auto;border:1px solid var(--line);background:var(--ink)}
 .tipd{border-bottom:1px solid var(--line)}
 .tipd:last-child{border-bottom:0}
-.tipd summary{cursor:pointer;padding:7px 10px;font-size:13px;color:var(--tx2);list-style:none}
+.tipd summary{cursor:pointer;padding:7px 10px;font-size:14px;color:var(--tx2);list-style:none}
 .tipd summary::-webkit-details-marker{display:none}
 .tipd summary b{color:var(--indigo);margin-right:7px}
 .tipd[open] summary{color:var(--gold)}
-.tipb{padding:2px 12px 11px;font-size:12px;line-height:1.8;color:var(--tx3)}
+.tipb{padding:2px 12px 11px;font-size:14px;line-height:1.8;color:var(--tx3)}
 /* 말머리 — 참모가 건네는 첫 두 줄. 본문과 **눈에 띄게 다른 층**이라야 분위기와 정보가 안 섞인다 */
 .tiplead{margin:0 0 18px;padding:13px 17px;border-left:3px solid var(--indigo);background:var(--ink);
   color:var(--tx2);font-size:17px;line-height:1.85;letter-spacing:.2px}
-.tipb .tiplead{margin-bottom:10px;padding:8px 11px;border-left-width:2px;font-size:13px;line-height:1.75}
+.tipb .tiplead{margin-bottom:10px;padding:8px 11px;border-left-width:2px;font-size:14px;line-height:1.75}
 .tlist button{text-align:left}
 .tlist button b{display:block;font-size:20px}
-.tlist button span{display:block;font-size:13.5px;color:var(--tx3);font-weight:400;line-height:1.5}
+.tlist button span{display:block;font-size:14px;color:var(--tx3);font-weight:400;line-height:1.5}
 /* 난이도 카드의 줄 안 강조 (v3.92) — b·span 이 전부 블록이라 여기서는 em 을 쓴다 */
 .tlist button em{font-style:normal}
 .tlist button .tai{color:var(--gold)}
@@ -1373,9 +1398,9 @@ img.por,img.por-lg{object-fit:cover;object-position:50% 18%;image-rendering:auto
   position:relative;box-shadow:inset 2px 2px 0 var(--line2), inset -2px -2px 0 var(--ink2)}
 .tflag{position:absolute;left:0;top:0;bottom:0;width:5px}
 .tfn{display:block;font-size:21px;font-weight:800;margin-left:8px}
-.tfn i{font-style:normal;font-size:13px;font-weight:400;color:var(--tx3);margin-left:6px}
-.tfd{display:block;font-size:13.5px;color:var(--tx2);margin-left:8px}
-.tfs{display:block;font-size:12px;color:var(--tx3);margin-left:8px}
+.tfn i{font-style:normal;font-size:14px;font-weight:400;color:var(--tx3);margin-left:6px}
+.tfd{display:block;font-size:14px;color:var(--tx2);margin-left:8px}
+.tfs{display:block;font-size:14px;color:var(--tx3);margin-left:8px}
 .tback{position:relative;margin-top:16px}
 .tback button{font-size:16px;color:var(--tx2);padding:9px 14px}
 .dlg{width:min(980px,100%);max-height:90vh;overflow:auto;padding:28px 32px}
@@ -1447,7 +1472,7 @@ html.touch .footbtn.touchonly{display:inline-flex}
   text-align:left;box-shadow:inset 2px 2px 0 var(--line2), inset -2px -2px 0 var(--ink2)}
 .spick:hover{background:var(--paperhi);box-shadow:inset 0 0 0 2px var(--gold);color:var(--gold)}
 .spick b{display:block;font-size:19px;font-weight:800}
-.spick span{display:block;font-size:13.5px;color:var(--tx3);font-weight:400;margin-top:3px}
+.spick span{display:block;font-size:14px;color:var(--tx3);font-weight:400;margin-top:3px}
 .sbadge{font-style:normal;font-size:12px;font-weight:700;color:var(--onacc);
   background:var(--gold);padding:1px 7px;margin-left:8px;vertical-align:2px}
 .sx{background:var(--paper);border:0;color:var(--tx2);width:44px;font-size:18px;
@@ -1477,7 +1502,7 @@ html.touch .footbtn.touchonly{display:inline-flex}
 .tour .ring{position:fixed;pointer-events:none;border:2px solid var(--gold);
   box-shadow:0 0 0 3px rgba(198,160,74,.22), 0 0 34px rgba(198,160,74,.30)}
 .tour .box{position:fixed;width:min(430px,88vw);padding:17px 20px;background:var(--paper)}
-.tour .tstep{font-size:13px;letter-spacing:2px;color:var(--indigo);margin-bottom:5px}
+.tour .tstep{font-size:14px;letter-spacing:2px;color:var(--indigo);margin-bottom:5px}
 .tour h3{margin:0 0 9px;font-size:22px;letter-spacing:1px}
 .tour .tbody{font-size:15px;line-height:1.95;color:var(--tx2)}
 .tour .tbody b{color:var(--gold)}
@@ -1486,6 +1511,12 @@ html.touch .footbtn.touchonly{display:inline-flex}
 .tour .tnav{display:flex;gap:8px;margin-top:15px}
 .tour .tnav button{flex:1;font-size:15px;padding:10px 14px;text-align:center}
 .tour .tnav button.mute{flex:0 0 auto}
+/* v3.157 QW3 — '그만' 이 회색 작은 글자라 안 보였다. 첫 단계부터 주사 테두리 · 44px 로 늘 보이게 한다 (눌러도 도움말에서 다시 볼 수 있다) */
+.tour .tnav button{min-height:44px}
+.tour .tnav button#tourSkip{color:var(--tx);background:var(--paperhi);border:2px solid var(--vermilion);font-weight:700;font-size:15px;padding:10px 16px}
+.firstwel{margin-top:12px}
+.firstwel summary{font-size:15px;color:var(--tx);padding:9px 12px}
+.firstwel .tipb{font-size:14px}
 /* 🔥 **조언만 작게 만들어 놨더니 안 읽혔다** (v3.101 — 사용자: *"조언이 눈에 안 읽힌다"*).
    실측: 조언은 **12.5px · 680px**, 같은 화면의 이벤트 팝업은 **19px · 980px** 이었다.
    글자 크기가 반이면 같은 글도 다른 글이 된다. 이벤트 팝업과 **같은 무게**로 맞춘다.
@@ -2266,7 +2297,7 @@ html.touch #tbar button{min-height:44px;padding:3px 16px}   /* 터치 44px (v3.1
     <div class="mapbtn">
       <button id="bFitOwn">내 영토</button>
       <button id="bFitAll">전체</button>
-      <button id="legbtn" class="touchonly" title="범례·안내 보이기/감추기">범례</button>
+      <button id="legbtn" title="범례·안내 보이기/감추기" aria-pressed="false">범례</button>
     </div>
     <!-- 범례 — 노드 색이 무슨 뜻인지 화면에서 바로 읽혀야 한다. draw() 가 채운다 -->
     <div class="legend" id="legend"></div>
@@ -4747,17 +4778,19 @@ function firstRunAsk(){
   /* 이미 답한 사람 — 문을 도로 열고 밀린 조언을 내보낸다 */
   if(prev !== null){ S.noTips = prev === "0"; tipGate = true; save(); pumpAdv(); return; }
   const T = TIPS.welcome, name = tipAdvisorTitle();
+  /* 🔄 v3.157 QW3 — **두 장을 한 장으로.** 옛 길은 첫 물음 → 환영 조언(두 번째 팝업) → 화면 안내였다. 환영의 내용(주공이 쥔 것 · 한 달이 한 번의 명령 · 세 칼럼)은
+     지우지 않고 **접이(details)** 로 이 카드에 담는다 — 펼쳐 읽을 수 있고, 아무것도 안 눌러도 첫 장면은 짧다. 대답 '처음일세' 는 곧바로 화면 안내로 간다. */
   advTop("처음 뵙습니다", "주공, 소인 " + josa(name, "이라", "라") + " 하옵니다", "",
     '<div class="tiplead">천하가 갈라졌습니다. 주공께서 이 길을 걸어 보신 적이 있으신지요.</div>'
   + '<span style="color:var(--tx3)">처음이시라면, 새로 여는 자리마다 소인이 한 번씩 곁에서 아뢰겠습니다. '
-  + '이미 아시는 길이라면 잠자코 따르겠습니다 — 어느 쪽이든 <b>도움말</b>에서 다시 정하실 수 있습니다.</span>',
-    [{ n:"처음일세 — 곁에서 일러 주게", f: () => {
+  + '이미 아시는 길이라면 잠자코 따르겠습니다 — 어느 쪽이든 <b>도움말</b>에서 다시 정하실 수 있습니다.</span>'
+  + '<details class="tipd firstwel"><summary><b>' + T.g + '</b> ' + T.n + ' — 먼저 알아 두실 것</summary>'
+  + '<div class="tipb">' + T.body + '</div></details>',
+    [{ n:"처음일세 — 화면부터 둘러보세", f: () => {
          localStorage.setItem(TIPKEY, "1"); S.noTips = false;
          (S.seen ||= {}).welcome = true; save();
-         /* 환영을 **줄의 맨 앞**에 세운다 — 뒤에 이미 도시 조언이 밀려 있다 */
-         advQueue.unshift({ kicker:"참모의 조언", g:T.g, title:T.n, sub:tipSub(), body:tipBody(T),
-                            choices:[{ n:"화면부터 둘러보세", f:tourStart }] });
-         tipGate = true;
+         tipGate = true;      // 문은 열어 두되 — 안내가 곧바로 잠근다(tourStart). 안내가 끝나야 밀린 조언이 나온다
+         tourStart();
        } },
      { n:"익히 아는 바다", mute:true, f: () => {
          tipsOff(); tipGate = true; draw();
@@ -4835,25 +4868,27 @@ const TOUR = [
 /* 아이패드 레이아웃(html.tab)에서는 단추가 ☰ 메뉴로 모이고 지도가 화면 전체라 가리킬 자리가 다르다 — 단계에 `tab` 이 있으면 그것을 가리킨다 (v3.143) */
 const tourSel = st => (document.documentElement.classList.contains("tab") && st.tab) || st.sel;
 let tourAt = -1, tourScroll = null;
+/* 안내 단계표 — 기본은 `TOUR`(본 화면). 수동 체험은 전투 화면용 표(`manualTour`)로 갈아 끼우고 끝나면 되돌린다 (v3.155) */
+let TOURSET = TOUR;
 const tourOn = () => tourAt >= 0;
 /* ⚠️ 안내가 화면을 옆으로 굴린다 (`scrollIntoView`). **끝나면 있던 자리로 돌려놓는다** —
    안내를 받고 났더니 화면이 딴 데를 보고 있으면 그것부터 다시 찾아야 한다. */
 function tourStart(){ tourAt = -1; tipGate = false; tourScroll = [scrollX, scrollY]; tourNext(); }
 function tourNext(){
   tourAt++;
-  while(tourAt < TOUR.length && !$(tourSel(TOUR[tourAt]))) tourAt++;   // 없는 자리는 건너뛴다
-  if(tourAt >= TOUR.length) return tourEnd();
+  while(tourAt < TOURSET.length && !$(tourSel(TOURSET[tourAt]))) tourAt++;   // 없는 자리는 건너뛴다
+  if(tourAt >= TOURSET.length) return tourEnd();
   tourDraw();
 }
 function tourEnd(){
-  tourAt = -1;
+  tourAt = -1; TOURSET = TOUR;
   const el = $("#tour"); el.classList.add("off"); el.innerHTML = "";
   if(tourScroll){ scrollTo(tourScroll[0], tourScroll[1]); tourScroll = null; }
   tipGate = true; pumpAdv();          // 안내가 끝나야 밀려 있던 조언이 나온다
 }
 function tourDraw(){
   if(!tourOn()) return;
-  const st = TOUR[tourAt], el = $(tourSel(st));
+  const st = TOURSET[tourAt], el = $(tourSel(st));
   if(!el) return tourNext();
   const W = innerWidth, H = innerHeight;
   /* ⚠️ 화면이 아직 크기를 안 가진 순간에 그리면 **말풍선이 1픽셀 폭으로 접힌다** —
@@ -4877,10 +4912,10 @@ function tourDraw(){
     + dim(0, y, x, h) + dim(x + w, y, W - x - w, h)
     + '<div class="ring" style="left:' + x + 'px;top:' + y + 'px;width:' + w + 'px;height:' + h + 'px"></div>'
     + '<div class="box frame" id="tourBox">'
-    +   '<div class="tstep">화면 안내 ' + (tourAt + 1) + ' / ' + TOUR.length + '</div>'
+    +   '<div class="tstep">' + (TOURSET.title || "화면 안내") + ' ' + (tourAt + 1) + ' / ' + TOURSET.length + '</div>'
     +   '<h3>' + st.n + '</h3><div class="tbody">' + st.body + '</div>'
-    +   '<div class="tnav choice"><button class="mute" id="tourSkip">그만</button>'
-    +   '<button id="tourNext">' + (tourAt === TOUR.length - 1 ? "다 보았네" : "다음 ▸") + '</button></div>'
+    +   '<div class="tnav choice"><button class="mute" id="tourSkip" title="화면 안내를 닫는다 — 도움말에서 다시 볼 수 있다">✕ 안내 그만 보기</button>'
+    +   '<button id="tourNext">' + (tourAt === TOURSET.length - 1 ? "다 보았네" : "다음 ▸") + '</button></div>'
     + '</div>';
   T.classList.remove("off");
   /* 말풍선 자리 — **비어 있는 쪽**에 붙인다. 대상을 가리면 안내가 안내를 지운다 */
@@ -8934,6 +8969,7 @@ function gameOver(msg){
 /* 🔒 전투 검증(타이틀 메뉴 · v3.152) 중에는 **실제 세이브를 덮지 않는다.** 전투 끝(`finishBattle`)·턴 끝 등
    68곳이 `save()` 를 부르므로 호출처마다 막지 않고 **이 문 하나**에서 막는다. `?battle` 직접 진입은 옛 동작 그대로(VERIFY=false). */
 let VERIFY = false;
+let MANUAL = false;           // 수동 체험 (v3.155) — VERIFY 와 함께 켜진다(저장 차단은 같은 문). 아래 `startManual` 참조
 function save(){ if(VERIFY) return; localStorage.setItem(KEY, JSON.stringify(S)); $("#fSave").textContent = "저장됨"; }
 function loadSave(){ try{ const s = localStorage.getItem(KEY); return s ? JSON.parse(s) : null; }catch(e){ return null; } }
 
@@ -10307,6 +10343,15 @@ const fitOwn = () => {   // 내 영토 중심 + 고정 배율. fit-to-bounds 는
   cam.k = snapZoom(1.35);
   cam.x = r.width/2 - cx*cam.k;
   cam.y = r.height/2 - cy*cam.k;
+  /* v3.157 QW1 — 영토가 가로로 길면 평균이 가운데여도 **고른 성**이 가장자리 · 지도 위 단추 밑에 앉는다.
+     고른 성(내 성)이 지도 안쪽 상자(좌우 100 · 위 110 — 오른쪽 위 '내 영토/전체/범례' 칩 밑 · 아래 100) 안에 들도록 **최소만** 민다. 줌은 안 건드린다. */
+  const sc = (typeof sel !== "undefined" && S.cities[sel]) ? cityById(sel) : null;
+  if(sc){
+    const mx = Math.min(100, r.width * .3), my = Math.min(110, r.height * .3);
+    const sx = PX(sc.x) * cam.k + cam.x, sy = PY(sc.y) * cam.k + cam.y;
+    cam.x += clamp(sx, mx, r.width - mx) - sx;
+    cam.y += clamp(sy, my, r.height - my) - sy;
+  }
   applyCam();
 };
 
@@ -11230,8 +11275,8 @@ function renderReco(){
     ${hid > 0 ? `<button class="rcmore" id="rcMore">나머지 ${hid}성 더 보기 (+${Math.min(hid, RECO_SHOW)}) ▾</button>` : ""}
     <div class="rcnote">달마다 맡기려면 군사를 두고 <b>임무위임</b>을 켜십시오. 수락한 배정은 장수 상세에서 언제든 바꿀 수 있습니다.${shortN ? ` · 배정 불가 ${shortN}칸은 장수가 모자랍니다.` : ""}</div>
     <div class="rcfoot"><span class="rcsum">제안 <b>${all}</b>건 · 선택 <b>${sel}</b>건 · ${R.rows.length}성</span>
-      <button id="rcAll"${all ? "" : " disabled"}>모두 수락 (${all})</button>
-      ${sel !== all ? `<button id="rcSel"${sel ? "" : " disabled"}>선택만 수락 (${sel})</button>` : ""}
+      ${/* v3.156 — 모두 수락 = **체크된 칸 전부** (PD: 체크를 푼 칸은 빼야 한다). 예전엔 푼 칸도 넣어서 `선택만 수락` 이 따로 있었다 — 이제 같은 뜻이라 하나로 합쳤다 */""}
+      <button id="rcAll"${sel ? "" : " disabled"}>모두 수락 (${sel})</button>
       <button id="rcClose" class="no">${R.first ? "나중에" : "닫 기"}</button></div>`;
   dlg.scrollTop = top;
   const byKey = k => { const [cid, duty] = k.split("|"); const r = R.rows.find(x => x.cid === cid); return [r, r.slots.find(s => s.duty === duty)]; };
@@ -11243,15 +11288,14 @@ function renderReco(){
     renderReco();
   });
   const more = $("#rcMore"); if(more) more.onclick = () => { R.shown += RECO_SHOW; renderReco(); };
-  const go = all => {
+  const go = () => {
     const list = [];
-    for(const r of R.rows) for(const s of r.slots) if(s.gid && (all || s.on)) list.push({ cid:r.cid, duty:s.duty, gid:s.gid });
+    for(const r of R.rows) for(const s of r.slots) if(s.gid && s.on) list.push({ cid:r.cid, duty:s.duty, gid:s.gid });
     const n = recoApply(list), skipped = list.length - n;
     recoNote = { turn:S.turn, text:`추천 배치 ${n}건을 배정했다${skipped ? ` (사정이 바뀐 ${skipped}건 제외)` : ""} — 바꾸려면 장수 상세에서.` };
     RECO = null; $("#mask").classList.add("off"); save(); drawSide(); draw();
   };
-  $("#rcAll").onclick = () => go(true);
-  const sb = $("#rcSel"); if(sb) sb.onclick = () => go(false);
+  $("#rcAll").onclick = go;
   $("#rcClose").onclick = () => { RECO = null; $("#mask").classList.add("off"); draw(); };
 }
 
@@ -18661,6 +18705,7 @@ function battleRecap(){
     + `<p style="font-size:13px;line-height:1.9;margin:0">${out.join("<br>")}</p>`;
 }
 function showBattleResult(won, why, lines, pows){
+  if(MANUAL) return manualResult(won, why);     // 수동 체험(v3.155) — 요약 + 다시 하기/타이틀로
   clearFX();                       // 결과창이 뜨면 전장 연출은 끝이다 (v3.28)
   const pow = pows.length ? pows[0] : null;
   /* 잡은 횟수는 **여기서** 센다 (v3.66). 포로가 여럿이면 이 함수가 재귀하는데 호출마다
@@ -19050,6 +19095,8 @@ function renderBattle(){
              있어서, OS 가 연출을 꺼 놓으면 되살릴 방법이 아예 없었다.
              ⚠️ OS 때문에 꺼진 경우에는 **왜 꺼졌는지**를 같이 적는다 — 그냥 "끔"이라고만
                 두면 사용자는 게임이 고장 난 줄 안다 (실제로 그렇게 신고가 왔다). */""}
+        ${MANUAL ? `<button class="bbtn alt" id="bGuide" title="전투 안내를 다시 본다">? 안내</button>
+        <button class="bbtn alt" id="bTitle" title="수동 체험을 마치고 타이틀로">타이틀로</button>` : ""}
         <button class="bbtn alt bfx" id="bFxT" title="${FX_AUTO_OFF
           ? "이 기기의 '애니메이션 줄이기' 설정 때문에 꺼져 있습니다 — 눌러서 켤 수 있습니다"
           : "전투 연출을 켜고 끕니다"}">연출 ${FX_ON ? "켬" : "끔"}${
@@ -19066,6 +19113,7 @@ function renderBattle(){
   fitGrid();                // 격자 칸 수에 맞춰 셀 크기를 잡는다 (v3.22)
   bindBattle();
   { const b = $("#bFxT"); if(b) b.onclick = () => { toggleFX(); renderBattle(); }; }
+  { const g = $("#bGuide"); if(g) g.onclick = manualGuide; const t = $("#bTitle"); if(t) t.onclick = exitVerify; }   // 수동 체험 전용 단추
   /* 전황 접기 (v3.112) — 우 패널이 없어지며 로그가 전장 위 오버레이가 됐다.
      ⚠️ **접을 수 있어야 한다.** 늘 펴 두면 오른쪽 뒷줄 칸을 가린다. */
   { const b = $("#bLogT"); if(b) b.onclick = () => { BAT.logOff = !BAT.logOff; renderBattle(); }; }
@@ -20206,7 +20254,8 @@ function titleScreen(step){
       <button data-m="load" ${(autoSave || slotList().length) ? "" : "disabled"}>이어하기${
         autoSave ? `<span class="tsub">자동 저장 ${autoSave.year}년 ${autoSave.month}월 · 세이브 ${slotList().length}개</span>`
              : `<span class="tsub">세이브 ${slotList().length}개</span>`}</button>
-      <button data-m="verify">전투 검증<span class="tsub">무작위 전쟁 · 병종 도트·이펙트 확인용 (세이브 안 건드림)</span></button>
+      <button data-m="manual">수동 체험<span class="tsub">카드 3장을 직접 놓아 끝까지 · 병력 우세 · 평지 (세이브 안 건드림)</span></button>
+      <button data-m="verify">검증(자동)<span class="tsub tdev">(개발검증용) · 무작위 판 — 밸런스 근거 아님</span></button>
       <button data-m="cfg" disabled>설 정<span class="tsub">준비 중</span></button>
       <button data-m="quit">게임 종료</button>
     </div>`;
@@ -20322,6 +20371,7 @@ function titleScreen(step){
     if(m === "import") return importSaveFile();
     if(m === "quit") return quitGame();
     if(m === "verify") return startVerify();
+    if(m === "manual") return startManual();
   });
   /* 세이브 고르기 — `__auto` 는 자동 저장, 나머지는 슬롯 id */
   T.querySelectorAll("button[data-load]").forEach(b => b.onclick = () => {
@@ -20566,6 +20616,7 @@ function startVerify(){
   verifyNext();
 }
 function exitVerify(){
+  if(MANUAL) manualLeave();                  // 수동 체험이면 난수·안내 층을 되돌린다
   VERIFY = false; tipGate = true; advQueue = []; advBusy = false;
   const adv = $("#advtop"); adv.classList.add("off"); adv.innerHTML = "";
   const bar = $("#tbar"); if(bar) bar.remove();
@@ -20575,6 +20626,142 @@ function exitVerify(){
   $("#mask").classList.add("off");
   S = null;                                  // 가짜 판을 버린다 — ☰ 메뉴는 S 가 없으면 안 열린다
   titleScreen("menu");
+}
+
+/* ═══ 수동 체험 (타이틀 메뉴 · v3.155) — docs/19 §5 ═══
+   후기: "전투 검증 자동 진행이 11턴 만에 공격군 전멸 → 카드 3장을 직접 배치하는 조작을 끝까지 못 해 봤다".
+   무작위 판(검증)은 밸런스 근거가 아니다. 이쪽은 **고정된 한 판**을 사람이 끝까지 두는 첫 전투 체험이다.
+   🔒 **규칙·상수·카드 효과·AI 는 한 글자도 안 바꿨다 — 고르는 것은 조건(편성·지형·병력비·난수 씨앗)뿐이다.**
+      "쉽게 이기도록 상수 조정" 금지(docs/19 §1.2). 마스터 데이터(GENERALS·CITIES)도 안 건드린다 — 평지인 성을 골랐다.
+   저장: `VERIFY` 를 같이 켠다 → `save()` 한 문이 막는다(세이브·이어하기 불변). 시험 바(`#tbar`)는 없다.
+   난수: 판이 열릴 때마다 `Math.random` 을 고정 씨앗으로 갈아 끼운다 → 같은 클릭이면 같은 판(전투 AI·피해 난수 포함,
+         연출은 난수를 안 쓴다). 나갈 때 원래 함수를 돌려준다. 다시 하기 = 같은 씨앗으로 처음부터. */
+const MAN = {
+  seed: 20261019,
+  /* 194년 조조 · 진류 → 산양(평지·성벽 없음 — 아래에서 def 를 낮춘다). 내 편은 상성이 드러나게 보병·기병·궁병 하나씩 */
+  year: 194, fid: "cao_cao", from: "chenliu", to: "shanyang",
+  mine: [["xiahou_dun", "infantry"], ["xiahou_yuan", "cavalry"], ["li_dian", "archer"]],
+  foe:  [["gao_shun", "infantry"], ["cheng_lian", "archer"], ["zang_ba", "infantry"]],
+  foeTroops: 12000, ratio: 1.5, foeDef: 20, foeMorale: 70,
+  key: "sk3_manual_guide",           // 가이드를 이미 봤는가 (localStorage — 실패해도 이 세션 동안은 `seenMem`)
+  seenMem: false, R0: null, runs: 0
+};
+const manSeen = () => { try { return !!localStorage.getItem(MAN.key); } catch(e){ return MAN.seenMem; } };
+const manMark = () => { MAN.seenMem = true; try { localStorage.setItem(MAN.key, "1"); } catch(e){} };
+function manSeedRng(seed){
+  let v = seed >>> 0;
+  Math.random = () => { v = (v * 1664525 + 1013904223) >>> 0; return v / 4294967296; };
+}
+function startManual(){
+  VERIFY = true; MANUAL = true; tipGate = false;
+  if(!MAN.R0) MAN.R0 = Math.random;
+  $("#title").classList.add("off"); $("#mask").classList.add("off"); pending = null; popupQueue = [];
+  manualBattle(true);
+}
+function manualLeave(){
+  MANUAL = false;
+  if(MAN.R0){ Math.random = MAN.R0; MAN.R0 = null; }
+  if(tourOn()) tourEnd();
+  TOURSET = TOUR;
+}
+/* 한 판을 (다시) 연다 — `firstOpen` 일 때만 가이드를 자동으로 띄운다(한 번 본 사람은 `?` 단추로) */
+function manualBattle(firstOpen){
+  if(tourOn()) tourEnd();
+  manSeedRng(MAN.seed); MAN.runs++;
+  SCEN = SCENARIOS.find(x => x.y === MAN.year);
+  newGame(MAN.fid);
+  S.noTips = true; advQueue = []; advBusy = false;       // 참모 조언 팝업이 전투를 덮지 않게 — 가이드는 아래 `manualTour` 가 맡는다
+  { const a = $("#advtop"); a.classList.add("off"); a.innerHTML = ""; }
+  $("#mask").classList.add("off"); pending = null; popupQueue = [];
+  const { from, to } = MAN;
+  const all = Object.keys(S.generals);
+  all.forEach(g => S.generals[g].city = from);
+  for(const [g, t] of MAN.mine) S.generals[g].unitType = t;
+  const dT = MAN.foeTroops;
+  nstateSet(to, { troops: dT, def: MAN.foeDef });          // def < 40 → 성벽 없음
+  S.cities[from].troops = Math.round(dT * MAN.ratio);
+  startBattle(from, to, MAN.mine.map(x => x[0]));
+  /* 수비는 중립이라 수비대 1기로 서 있다 — 고정 편성으로 갈아 세운다(`randomBattle` 과 같은 길: `mkUnit` · `setUnitType` · `beginPlan`) */
+  BAT.def.units = MAN.foe.map(([gid, ty]) => {
+    const g = GENERALS.find(x => x.i === gid);
+    const u = mkUnit(g, dT / MAN.foe.length, "def", MAN.foeMorale, gid, B.DRILL_PIVOT, null);
+    setUnitType(u, ty, g.ap);
+    return u;
+  });
+  placeCol(BAT.def.units, "def", BAT.gw, BAT.gh, BAT.wall);
+  BAT.def.cmd = BAT.def.units[0];
+  { const c = BAT.def.cmd;
+    BAT.def.kiMax = Math.round(BT.MORALE_POOL_BASE + c.int / BT.MORALE_POOL_INT_DIV + c.cha / BT.MORALE_POOL_CHA_DIV);
+    BAT.def.ki = BAT.def.kiMax;
+    BAT.foeSlotN = BT.COMBO_SLOTS + (c.int >= BT.COMBO_SLOT_INT_THRESHOLD ? 1 : 0); }
+  BAT.defReserve = 0;
+  beginPlan();
+  BAT.sel = BAT.atk.units[0].uid;                          // 첫 부대를 미리 골라 둔다 — 손패가 처음부터 보여야 가이드가 가리킬 수 있다
+  renderBattle();
+  if(firstOpen && !manSeen()) manualGuide();
+}
+/* 전투 화면 안내 — `tour` 층(z 95)을 그대로 쓰되 단계표만 갈아 끼운다. 건너뛰기(그만) 가능 · 본 것으로 친다 */
+function manualTour(){
+  const T = [
+    { sel:"#battle .bfield", pad:0, n:"카드 3장을 한꺼번에", body:
+      '주공, 이 싸움은 한 턴에 <b style="color:var(--gold)">카드 3장을 같은 턴에 한꺼번에 놓고</b> 확정합니다. '
+    + '확정하면 아군과 적의 카드가 <b>슬롯 순서대로 하나씩 공개</b>되어 풀립니다. 한번 확정하면 못 무르니, 적이 어디로 갈지 읽는 싸움입니다.<br>'
+    + '<span style="color:var(--tx3)">푸른 깃발이 아군, 붉은 깃발이 적입니다. 부대를 누르면 그 부대의 패가 나옵니다.</span>' },
+    { sel:"#battle .ovhand", n:"패 — 카드를 고르는 곳", body:
+      '전장의 <b>아군 부대를 누르면</b> 그 부대가 쓸 수 있는 카드가 여기 뜹니다. 공격은 부대 <b>앞쪽 칸</b>을 칩니다.<br>'
+    + '이동·책략처럼 자리를 정하는 카드는 누른 뒤 <b>전장의 밝아진 칸</b>을 한 번 더 누릅니다.<br>'
+    + '<span style="color:var(--tx3)">카드 옆 氣는 군기 값 — 군단이 함께 씁니다. 「적 있음」은 지금 자리에서 닿는다는 뜻입니다.</span>' },
+    { sel:"#battle .slots", n:"슬롯 3칸 — 순서", body:
+      '고른 카드는 왼쪽 빈 칸부터 채워집니다. 풀리는 순서는 <b>1번 → 2번 → 3번</b>입니다.<br>'
+    + '잘못 놓았으면 그 칸을 눌러 비우고, 「초기화」로 전부 지울 수 있습니다. 한 부대가 여러 칸을 써도 됩니다.<br>'
+    + '<span style="color:var(--tx3)">오른쪽 「적」 칸의 ? 는 참모가 읽은 적의 수입니다 — 틀릴 수 있습니다.</span>' },
+    { sel:"#bConfirm", n:"확정 — 칸이 다 차야 켜진다", body:
+      '세 칸이 모두 차면 <b>확 정 ▶</b>이 켜집니다. 누르면 <b>무를 수 없습니다.</b> 누르기 전에 한 번 더 살피십시오.' },
+    { sel:"#battle .brow", n:"공개 · 해소", body:
+      '확정하면 이 단추가 <b>슬롯 1 공개 ▶</b> → <b>해 소 ▶</b>로 바뀝니다.<br>'
+    + '<b>공개</b>는 양쪽이 낸 카드를 전장에 드러내는 박자, <b>해소</b>는 <b>책략 → 이동 → 공격</b> 순으로 풀어 피해를 내는 박자입니다. '
+    + '세 칸을 다 돌면 「턴 정리」 뒤 다음 턴이 열립니다.' },
+    { sel:"#battle .bhead", n:"상성 · 지형 · 군기", body:
+      '<b>상성</b> 보병▶궁병▶기병▶보병 — 이기는 쪽이 피해 ×' + BT.COUNTER_TYPE_MULT.advantage + '. '
+    + '<b>지형</b>은 수비측에 곱해지는데, 이번 판은 <b>평지</b>라 없습니다.<br>'
+    + '<b>군기(氣)</b>는 군단 공용 — 센 카드를 쓰면 다른 부대가 그 턴에 못 움직입니다. '
+    + '<b>전군 사기</b>가 ' + BT.ARMY_BREAK_MORALE + ' 아래로 떨어지면 총퇴각이고, 군량이 바닥나도 사기가 깎입니다. '
+    + BT.BATTLE_TURN_LIMIT + '턴을 넘기면 잔존 병력으로 가립니다.' }
+  ];
+  T.title = "전투 안내";
+  return T;
+}
+function manualGuide(){
+  if(!BAT || !MANUAL) return;
+  manMark();
+  TOURSET = manualTour();
+  tourStart();
+}
+/* 결과 요약 — `showBattleResult` 의 갈래. 이 판은 가짜 판(`VERIFY`)이라 포로·천명 처리 없이 보여 주기만 한다 */
+function manualResult(won, why){
+  clearFX();
+  const rows = side => BAT[side].units.map(u =>
+    '<tr><td>' + u.name + '</td><td>' + UTYPE[u.type].n + '</td><td style="text-align:right;padding:0 10px">'
+    + nf(Math.max(0, Math.round(u.troops))) + ' / ' + nf(Math.round(u.troops0)) + '</td><td style="width:3em;color:var(--vermilion)">' + (u.routed ? "궤멸" : "") + '</td></tr>').join("");
+  const sum = side => BAT[side].units.reduce((a, u) => a + Math.max(0, u.troops), 0);
+  const sum0 = side => BAT[side].units.reduce((a, u) => a + u.troops0, 0);
+  const tip = won ? "상성과 포진이 맞아떨어진 판입니다. 다른 카드 조합으로도 같은 판을 다시 두어 보십시오."
+                  : "병력이 우세했어도 카드를 흩뜨리거나 군기를 다 써 버리면 집니다. 같은 판을 다시 두며 어느 턴에서 갈렸는지 보십시오.";
+  $("#dlg").innerHTML = '<h2 style="color:' + (won ? "var(--gold)" : "var(--vermilion)") + '">' + (won ? "승 리" : "패 배") + '</h2>'
+    + '<div class="sub">수동 체험 · ' + BAT.turnsFought + '턴 · ' + why + '</div>'
+    + '<p style="font-size:13px;line-height:1.9">아군 ' + nf(Math.round(sum("atk"))) + ' / ' + nf(Math.round(sum0("atk"))) + '명 남음 · 적 '
+    + nf(Math.round(sum("def"))) + ' / ' + nf(Math.round(sum0("def"))) + '명 남음</p>'
+    + '<table style="width:100%;font-size:13px;line-height:1.7;border-collapse:collapse">' + rows("atk")
+    + '<tr><td colspan="4" style="border-top:1px solid var(--line2)"></td></tr>' + rows("def") + '</table>'
+    + '<p style="font-size:13px;color:var(--tx2);line-height:1.8">' + tip + '</p>'
+    + '<div class="choice"><button data-p="again">다시 하기 <span class="cost">같은 판을 처음부터</span></button>'
+    + '<button data-p="title" class="mute">타이틀로</button></div>';
+  $("#mask").classList.remove("off");
+  $("#dlg").querySelectorAll("button[data-p]").forEach(b => b.onclick = () => {
+    $("#mask").classList.add("off");
+    if(b.dataset.p === "again"){ BAT = null; manualBattle(false); }
+    else { BAT = null; exitVerify(); }
+  });
 }
 
 function rnd(a){ return a[Math.floor(Math.random()*a.length)]; }
@@ -20864,12 +21051,19 @@ if(localStorage.getItem("sk3_proto_nolog")) document.body.classList.add("nolog")
   /* 기록 단추의 숫자 — "이번 달 N" */
   const upd = () => { const m = /이번 달\s*(\d+)/.exec(logbar.textContent || ""), b = $("#logBadge"); if(b){ b.textContent = m ? m[1] : ""; b.style.display = m ? "" : "none"; } };
   let t = 0; new MutationObserver(() => { clearTimeout(t); t = setTimeout(upd, 120); }).observe(logbar, { childList:true, subtree:true, characterData:true }); upd();
-  $("#legbtn").onclick = () => wrap.classList.toggle("legopen");
+  /* 범례 접힘 (v3.157 QW1) — 기본 접힘, 펼침 여부는 브라우저에 기억(막혀도 동작). PC·태블릿 같은 길 */
+  { const LK = "sk3_proto_legend", lb = $("#legbtn");
+    const put = on => { wrap.classList.toggle("legopen", on); lb.setAttribute("aria-pressed", on ? "true" : "false"); };
+    let on0 = false; try { on0 = localStorage.getItem(LK) === "1"; } catch(e){}
+    put(on0);
+    lb.onclick = () => { const on = !wrap.classList.contains("legopen"); put(on); try { localStorage.setItem(LK, on ? "1" : "0"); } catch(e){}
+      if(typeof layoutLabels === "function") layoutLabels(); };   // 상자가 서고 접히면 이름표가 피할 자리가 달라진다
+  }
   /* 태블릿 구간 판정 */
   const mq = matchMedia("(max-width:1400px)");
   const sync = () => { const on = mq.matches; if(root.classList.contains("tab") === on) return;
     root.classList.toggle("tab", on);
-    if(!on){ main.classList.remove("dL", "dR"); wrap.classList.remove("legopen"); }
+    if(!on){ main.classList.remove("dL", "dR"); }
     dispatchEvent(new Event("resize")); };
   if(mq.addEventListener) mq.addEventListener("change", sync); else mq.addListener(sync);
   sync();
@@ -20902,7 +21096,7 @@ if(localStorage.getItem("sk3_proto_nolog")) document.body.classList.add("nolog")
       ${awOn ? btn("pmAuto", "자동 전쟁", S && S.autoWar ? "켜짐" : "꺼짐") : ""}
       ${btn("pmTheme", "테마", light ? "라이트 → 다크" : "다크 → 라이트")}
       ${btn("pmHelp", "도움말")}
-      ${root.classList.contains("touch") && $("#fDiag") ? btn("pmDiag", "성능 진단") : ""}
+      ${root.classList.contains("touch") && $("#fDiag") ? btn("pmDiag", "성능 진단", "(개발검증용)") : ""}
       ${btn("pmExit", "메인메뉴로 나가기", "", "danger")}
       ${btn("pmClose", "닫기")}
       <div class="pmv">빌드 ${window.__BUILD || "dev"}</div></div>`;
@@ -20942,7 +21136,7 @@ addEventListener("resize", () => {
   fitTestBar();          // 시험 바가 줄바꿈되면 높이가 바뀐다 — 하단 조작부를 다시 비켜 준다
 });
 </script>
-<script>window.__BUILD="a02fb516";</script>
+<script>window.__BUILD="6be27c95";</script>
 <script>
 /* PWA — 서비스워커(오프라인 시작) · 저장소 영속 요청. build_web.mjs 가 붙인다.
    v3.142 — 갱신 확인: 시작 · 포그라운드 복귀 때 registration.update() 와 version.txt(캐시 우회) 를 본다.
