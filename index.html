@@ -1343,6 +1343,22 @@ img.por,img.por-lg{object-fit:cover;object-position:50% 18%;image-rendering:auto
   background:linear-gradient(transparent,rgba(8,6,4,.92));font-size:17px;letter-spacing:3px}
 .evbadge{display:inline-block;padding:3px 12px;border:2px solid;font-size:15.5px;
   font-weight:800;letter-spacing:2px;margin-bottom:9px}
+/* 월말 리포트 한 장 (F3 · v3.158) — 삽화 없음(v3.63). 접힌 줄이 기본이고 길면 안에서 스크롤한다 (확인 단추가 밀리지 않게) */
+.dgl{max-height:min(40vh,340px);max-height:min(40dvh,340px);overflow:auto;border:1px solid var(--line);background:var(--ink);margin:6px 0 12px;-webkit-overflow-scrolling:touch}
+.dg{border-bottom:1px solid var(--line)}
+.dg summary{cursor:pointer;padding:9px 12px;font-size:15px;line-height:1.55;color:var(--tx);list-style:none;min-height:44px;box-sizing:border-box}
+.dg summary::-webkit-details-marker{display:none}
+.dg summary::before{content:"▸";color:var(--tx3);margin-right:7px}
+.dg[open] summary::before{content:"▾"}
+.dg summary b,.dg1 b{color:var(--jade);margin-right:6px}
+.dgb{padding:2px 14px 12px 28px;font-size:14.5px;line-height:1.8;color:var(--tx2)}
+.dg1{padding:8px 12px;font-size:15px;line-height:1.5;border-bottom:1px solid var(--line)}
+.dgh{padding:7px 12px;font-size:13.5px;font-weight:800;letter-spacing:1px;color:var(--gold);background:var(--paper);border-bottom:1px solid var(--line)}
+.choice.dgc{grid-template-columns:1.5fr 1fr 1fr}   /* 확인 · 하나씩 · 매달 받지 않기 — 한 줄로 (세로로 쌓으면 확인이 밀린다) */
+.choice.dgc button{text-align:center;padding:13px 10px}
+@media(max-width:620px){ .choice.dgc{grid-template-columns:1fr} }
+.dgm{color:var(--tx3);font-size:13.5px}
+.dgs{color:var(--tx3);font-size:13.5px;float:right}
 
 /* 모달 */
 .mask{position:fixed;inset:0;background:rgba(8,6,4,.88);display:flex;align-items:center;
@@ -2823,6 +2839,7 @@ const EVENT_STYLE = {
   leave:       { c:"var(--vermilion)", g:"去", n:"이 탈" },
   disaster:    { c:"var(--vermilion)", g:"災", n:"재 해" },
   report:      { c:"var(--jade)",      g:"報", n:"월 보" },  /* 참모의 달마다 보고 (v3.63) */
+  digest:      { c:"var(--jade)",      g:"報", n:"월말 리포트" },  /* 선택 없는 팝업을 한 장에 접은 것 (F3 · v3.158) */
   advice:      { c:"var(--indigo)",    g:"諫", n:"참모의 조언" }  /* 처음 들어간 자리 (v3.99) */
 };
 const FALLBACK_ICON = { gold:"金", food:"米", troops:"兵", general:"將",
@@ -4462,11 +4479,76 @@ let popupQueue = [];
    등용 미션은 아홉이 저마다 다른 장면인데(눈 내린 초려 · 병상 · 곳간 · 백마…)
    `kind` 가 전부 "recruit" 라 **한 장을 아홉이 돌려 쓰고 있었다** — 삼고초려 본문이
    "초려의 사립문"인데 그림은 막사였다. */
-function popup(kind, title, body, sub, art){ popupQueue.push({ kind, title, body, sub, art }); }
+function popup(kind, title, body, sub, art, opt){ popupQueue.push({ kind, title, body, sub, art, ...(opt || {}) }); }
+
+/* ═══ 월말 리포트 (F3 · v3.158 · docs/19 §3) ═══
+   🔥 **팝업은 표시 전용이다** — 효과는 팝업을 만든 자리에서 이미 적용됐다. 그래서 월말에 쌓인 줄을
+      *표시만* 접는다. 규칙·난수 소비·발생 순서·`pending`/`npcRaid` 순서(= 이벤트 뒤에 내습)는 한 글자도 안 건드린다.
+   등급 표 (kind 로 정한다 — 호출처 35곳을 하나씩 고치지 않는다. 호출처가 갈라 말해야 할 때만 `opt.g`):
+     M 반드시 멈춤 — 함락 · 이탈 · 등용(탐색 성공·미션·잠입…) · 재해(처형)  → 지금처럼 한 장씩
+     L 한 줄 요약  — 월보 · 편입 · 출사/귀부(해 바뀔 때 등용 몰림, `opt.grp:"debut"`)  → 리포트 한 장 안의 접힌 줄
+     X 로그만      — (팝업이 아니라 `say` 로 이미 기록에 있다 — 참모 언질·수치 변화. 팝업 종류로는 없다)
+   ⚠️ 인재 탐색 성공은 `recruit` 의 M 이다 (docs/19 §1.2 금지선) — `recruit` 를 통째로 L 로 돌리지 말 것.
+   ⚠️ 한 달에 L 이 2장 미만이면 접지 않는다(한 장짜리 리포트는 옛 팝업과 같다). */
+const POPUP_GRADE = { report:"L", annex:"L", disaster:"M", capture:"M", leave:"M", recruit:"M", battle_win:"M", battle_lose:"M" };
+const popupGrade = p => p.g || POPUP_GRADE[p.kind] || "M";
+/* `flat` = 옛 방식(한 장씩). 하네스는 `window.POPUP_FLAT` 로 끈다. 저장은 `S.reportMode` (선택 필드 — 없으면 묶음) */
+const popupFlat = () => window.POPUP_FLAT === true || !!(S && S.reportMode === "flat");
+function popupFold(){
+  if(popupFlat() || popupQueue.length < 2) return;
+  const L = popupQueue.filter(p => popupGrade(p) === "L");
+  if(L.length < 2) return;
+  const rest = popupQueue.filter(p => popupGrade(p) !== "L");   // M 의 서로 간 순서는 그대로
+  popupQueue = [{ kind:"digest", title:`${S.year}년 ${S.month}월 — 월말 리포트`, items:L }, ...rest];
+}
+let digestShown = 0;     // 처음 두 번은 월보를 펼쳐 둔다 (해설) — 저장하지 않는다(S 에 쓰면 모드끼리 상태가 갈린다)
+const plainT = h => String(h || "").replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
+function showDigest(p, done){
+  const rep = p.items.find(i => i.kind === "report");
+  const deb = p.items.filter(i => i.grp === "debut");
+  const oth = p.items.filter(i => i !== rep && i.grp !== "debut");
+  const open = digestShown++ < 2 ? " open" : "";
+  let secs = "";
+  if(rep){
+    const parts = String(rep.body).split("<br>"), head = parts[0];
+    const rest = parts.slice(1).join("<br>").replace(/^(<br>)+/, "").trim();
+    secs += rest
+      ? `<details class="dg"${open}><summary><b>월 보</b> ${head}</summary><div class="dgb">${rep.sub ? `<span class="dgm">${rep.sub}</span><br>` : ""}${rest}</div></details>`
+      : `<div class="dg1"><b>월 보</b> ${head}${rep.sub ? ` <span class="dgm">${rep.sub}</span>` : ""}</div>`;
+  }
+  for(const i of oth)
+    secs += `<details class="dg"><summary><b>${(EVENT_STYLE[i.kind] || EVENT_STYLE.annex).n}</b> ${plainT(i.title)}</summary>`
+          + `<div class="dgb">${i.body}${i.sub ? `<br><span class="dgm">${i.sub}</span>` : ""}</div></details>`;
+  if(deb.length)
+    secs += `<div class="dgh">등용 후보 모음 — ${deb.length}명</div>`
+          + deb.map(i => i.row
+              ? `<div class="dg1"><b>${i.row.name}</b> <span class="dgm">${i.row.tag} · ${i.row.city}</span> <span class="dgs">${i.row.st}</span></div>`
+              : `<div class="dg1">${plainT(i.title)}</div>`).join("");
+  /* 이어서 멈출 일 — 이 카드 다음에 오는 M 팝업 · 고를 이벤트 · 내습 방어전 */
+  const next = popupQueue.length + (pending ? 1 : 0) + (npcRaid ? 1 : 0);
+  $("#dlg").innerHTML = `
+    <div class="evbadge" style="color:var(--jade);border-color:var(--jade)">월말 리포트</div>
+    <h2>${p.title}</h2>
+    <div class="sub">정리 ${p.items.length}건${next ? ` · 이어서 확인할 일 ${next}건` : ""}</div>
+    <div class="dgl">${secs}</div>
+    <div class="choice dgc"><button id="evOk">${next ? "확인 — 이어서" : "확인"}</button>
+      <button id="evSplit" class="mute">하나씩 보기</button>
+      ${rep ? `<button id="evMute" class="mute">매달 받지 않기</button>` : ""}
+    </div>`;
+  $("#mask").classList.remove("off");
+  $("#evOk").onclick = () => { $("#mask").classList.add("off"); drainPopups(done); };
+  $("#evSplit").onclick = () => { popupQueue = [...p.items, ...popupQueue]; $("#mask").classList.add("off"); drainPopups(done); };
+  if($("#evMute")) $("#evMute").onclick = () => {
+    S.noReport = true;
+    say("i", "달마다의 보고를 받지 않는다 — 조정의 군사 자리에서 다시 켤 수 있다.");
+    $("#mask").classList.add("off"); drainPopups(done);
+  };
+}
 
 function drainPopups(done){
   if(!popupQueue.length){ done && done(); return; }
   const p = popupQueue.shift();
+  if(p.kind === "digest") return showDigest(p, done);
   const st = EVENT_STYLE[p.kind] || EVENT_STYLE.recruit;
   /* 지정된 그림이 있으면 그것을, 없으면 갈래의 기본 그림을 쓴다.
      ⚠️ 지정한 열쇠에 파일이 아직 없으면 **갈래 기본으로 떨어진다** — 삽화를 하나씩
@@ -6843,6 +6925,7 @@ function finishTurn2(delta){
   vassalTribute();          // 속국의 조공 (v3.70) — 수도로 들어온다
   turnReport();
   save(); draw(delta);
+  popupFold();   // 월말 리포트 (F3) — **표시 순서만** 정한다: 리포트 → M 팝업들 → (monthEnd) 고를 이벤트 → 내습
   /* NPC 내습은 **맨 마지막**에 띄운다 — 재해 선택·이벤트 팝업을 다 넘긴 뒤라야
      플레이어가 전투 하나에만 집중할 수 있다.
      🔴 **"넘긴 뒤"가 아니라 "있으면 버린다"였다** (v3.120-19 에 잡았다).
@@ -7471,7 +7554,9 @@ function debutTick(){
       const first = g.y === S.year;
       say("j", `◈ ${josa(g.name, "이", "가")} ${first ? "벼슬길에 올라" : "우리에게"} 몸을 맡겼다 — ${cityById(home).n}`);
       popup("recruit", first ? "출 사" : "귀 부", `<b>${g.name}</b>${jsa(g.name, "이", "가")} 우리 문하에 들었다.<br>`
-        + `무${g.s[0]} 지${g.s[1]} 정${g.s[2]} 매${g.s[3]}`, `${S.year}년 · ${cityById(home).n}`);
+        + `무${g.s[0]} 지${g.s[1]} 정${g.s[2]} 매${g.s[3]}`, `${S.year}년 · ${cityById(home).n}`, undefined,
+        { g:"L", grp:"debut", row:{ name:g.name, tag:first ? "출 사" : "귀 부", city:cityById(home).n,
+          st:`무${g.s[0]} 지${g.s[1]} 정${g.s[2]} 매${g.s[3]}` } });   // 해 바뀔 때 몰리는 등용 → 리포트의 '등용 후보 모음' (F3)
     } else if(S.npc && S.npc[f]){
       const holds = Object.entries(S.neutral || {}).filter(([, n]) => n.owner === f).map(([cid]) => cid);
       if(!holds.length) continue;                     // 그 세력이 땅을 다 잃었다 → 재야로 둔다
@@ -12778,7 +12863,9 @@ function renderCourt(){
            끄고 켜는 곳도 여기가 맞다. 팝업의 "매달 받지 않기"와 같은 값을 본다. */""}
       ${key === "strategist" && idx === 0
         ? `<div class="crole" style="padding-top:2px">달마다의 보고
-             <button class="rpt" data-rpt="1">${S.noReport ? "받지 않는 중" : "받는 중"}</button></div>` : ""}
+             <button class="rpt" data-rpt="1">${S.noReport ? "받지 않는 중" : "받는 중"}</button></div>
+           <div class="crole" style="padding-top:2px">월말 리포트 묶음
+             <button class="rpt" data-rfold="1">${S.reportMode === "flat" ? "한 장씩 (옛 방식)" : "한 장으로 묶음"}</button></div>` : ""}
     </div>`;
   };
   let central = "";
@@ -12938,6 +13025,8 @@ function renderCourt(){
     b.onclick = () => { dropAdvisor(b.dataset.cdropadv); renderCourt(); draw(); });
   $("#dlg").querySelectorAll("button[data-rpt]").forEach(b =>
     b.onclick = () => { S.noReport = !S.noReport; save(); renderCourt(); });
+  $("#dlg").querySelectorAll("button[data-rfold]").forEach(b =>
+    b.onclick = () => { S.reportMode = S.reportMode === "flat" ? "fold" : "flat"; save(); renderCourt(); });
   $("#dlg").querySelectorAll("button[data-cset]").forEach(b =>
     b.onclick = () => { setPost(courtPick, b.dataset.cset); courtPick = null; renderCourt(); draw(); });
 }
@@ -20578,12 +20667,14 @@ $("#bHelp").onclick = () => {
 
     <div class="choice" style="margin-top:16px">
       <button id="hpTips">${off ? "참모의 조언 다시 받기" : "참모의 조언 그만 받기"}</button>
+      <button id="hpFold">${S && S.reportMode === "flat" ? "월말 리포트 묶음 켜기" : "월말 리포트 묶음 끄기"}</button>
       <button onclick="document.getElementById('mask').classList.add('off')">닫 기</button>
       <button style="border-color:var(--vermilion)" onclick="if(confirm('처음부터 다시 시작할까요?')){localStorage.removeItem('${KEY}');location.reload();}">처음부터</button>
     </div>`;
   /* ⚠️ 도움말 창을 먼저 닫는다 — 안내는 **본 화면**을 밝히는 것이라 위에 창이 떠 있으면
      가리키는 자리가 그 창 밑에 깔린다. */
   $("#hpTour").onclick = () => { $("#mask").classList.add("off"); tourStart(); };
+  $("#hpFold").onclick = () => { if(!S) return; S.reportMode = S.reportMode === "flat" ? "fold" : "flat"; save(); $("#bHelp").onclick(); };
   $("#hpTips").onclick = () => {
     S.noTips = !S.noTips;
     /* 다시 켤 때는 **본 기록도 지운다** — 안 그러면 켜 놓고도 아무것도 안 뜬다 */
@@ -21136,7 +21227,7 @@ addEventListener("resize", () => {
   fitTestBar();          // 시험 바가 줄바꿈되면 높이가 바뀐다 — 하단 조작부를 다시 비켜 준다
 });
 </script>
-<script>window.__BUILD="6be27c95";</script>
+<script>window.__BUILD="fae7ea13";</script>
 <script>
 /* PWA — 서비스워커(오프라인 시작) · 저장소 영속 요청. build_web.mjs 가 붙인다.
    v3.142 — 갱신 확인: 시작 · 포그라운드 복귀 때 registration.update() 와 version.txt(캐시 우회) 를 본다.
